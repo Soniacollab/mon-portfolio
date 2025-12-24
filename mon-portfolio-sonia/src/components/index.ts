@@ -2,17 +2,19 @@
 import {
   EarthCanvas,
   BallCanvas,
-  ComputersCanvas,
   StarsCanvas,
+  TechBallsCanvas,
 } from "./canvas";
-import Hero from "./sections/Hero";
-import Navbar from "./layout/Navbar";
-import About from "./sections/About";
-import Tech from "./sections/Tech";
-import Experience from "./sections/Experience";
-import Works from "./sections/Works";
-import Contact from "./sections/Contact";
-import CanvasLoader from "./layout/Loader";
+import Hero from "./sections/Hero/Hero";
+import Navbar from "./organisms/Navbar";
+import About from "./sections/About/About";
+import Tech from "./sections/Tech/Tech";
+import Experience from "./sections/Experience/Experience";
+import Works from "./sections/Works/Works";
+import Contact from "./sections/Contact/Contact";
+import SectionHeader from "./molecules/SectionHeader/SectionHeader";
+
+
 
 export {
   Hero,
@@ -22,9 +24,7 @@ export {
   Experience,
   Works,
   Contact,
-  CanvasLoader,
   EarthCanvas,
   BallCanvas,
-  ComputersCanvas,
   StarsCanvas,
 };

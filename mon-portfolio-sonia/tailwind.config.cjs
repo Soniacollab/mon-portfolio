@@ -21,6 +21,20 @@ module.exports = {
       backgroundImage: {
         "hero-pattern": "url('')",
       },
+      keyframes: {
+        borderFlow: {
+          "0%": { opacity: "0.35", boxShadow: "none" },
+          "50%": {
+            opacity: "1",
+            boxShadow:
+              "0 0 25px rgba(145,94,255,0.35), 0 0 35px rgba(125,211,252,0.25)",
+          },
+          "100%": { opacity: "0.35", boxShadow: "none" },
+        },
+      },
+      animation: {
+        borderFlow: "borderFlow 3.5s ease-in-out infinite",
+      },
     },
   },
   plugins: [],

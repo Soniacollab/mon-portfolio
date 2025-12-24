@@ -1,0 +1,38 @@
+import mongoose, { Document, Schema } from "mongoose";
+
+export interface IExperience extends Document {
+  title: string;
+  company: string;
+  description: string;
+  type: 'stage' | 'job' | 'internship' | 'freelance';
+  startDate: Date;
+  endDate: Date;
+  location?: string;
+  technologies: mongoose.Types.ObjectId[]; // Référence vers Skill
+  achievements: string[]; // Points/bullet points
+  profile_id?: mongoose.Types.ObjectId;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const ExperienceSchema = new Schema<IExperience>(
+  {
+    title: { type: String, required: true, unique: true },
+    company: { type: String, required: true },
+    description: { type: String, required: true },
+    type: { 
+      type: String, 
+      enum: ['stage', 'job', 'internship', 'freelance'], 
+      required: true 
+    },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    location: { type: String },
+    technologies: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
+    achievements: [{ type: String }], // Liste de points/bullet points
+    profile_id: { type: Schema.Types.ObjectId, ref: "Profile" }
+  },
+  { timestamps: true }
+);
+
+export default mongoose.model<IExperience>("Experience", ExperienceSchema);

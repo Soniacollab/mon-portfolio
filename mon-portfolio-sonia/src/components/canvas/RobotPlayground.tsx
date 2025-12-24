@@ -1,7 +1,8 @@
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, useAnimations, Center, OrbitControls } from "@react-three/drei";
 import { Suspense, useEffect, useRef } from "react";
-import Loader from "../layout/Loader";
+import { Loader as CanvasLoader } from "../atoms";
+
 
 const Robot = () => {
   const group = useRef<any>();
@@ -59,7 +60,7 @@ const RobotPlayground = () => {
       <directionalLight position={[5, 5, 5]} intensity={1.2} />
       <pointLight position={[0, 3, -2]} intensity={1.8} color="#915EFF" />
 
-      <Suspense fallback={<Loader />}>
+      <Suspense fallback={<CanvasLoader />}>
         <Robot />
       </Suspense>
 
