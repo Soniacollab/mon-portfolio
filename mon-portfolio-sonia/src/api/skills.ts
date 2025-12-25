@@ -11,6 +11,6 @@ export interface TSkill {
 }
 
 export const getSkills = async (): Promise<TSkill[]> => {
-  const res = await axios.get("http://localhost:5000/api/skills");
+  const res = await axios.get("http://localhost:5000/api/admin/skills");
   return res.data;
 };

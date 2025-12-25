@@ -17,6 +17,6 @@ export interface TProfile {
 
 // Récupèrer profil
 export const getProfile = async (): Promise<TProfile> => {
-  const res = await axios.get("http://localhost:5000/api/profile");
+  const res = await axios.get("http://localhost:5000/api/admin/profile");
   return res.data; 
 };

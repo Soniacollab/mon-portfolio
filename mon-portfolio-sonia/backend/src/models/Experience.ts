@@ -6,6 +6,7 @@ export interface IExperience extends Document {
   description: string;
   type: 'stage' | 'job' | 'internship' | 'freelance';
   startDate: Date;
+  icon: string;
   endDate: Date;
   location?: string;
   technologies: mongoose.Types.ObjectId[]; // Référence vers Skill
@@ -29,8 +30,9 @@ const ExperienceSchema = new Schema<IExperience>(
     endDate: { type: Date, required: true },
     location: { type: String },
     technologies: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
-    achievements: [{ type: String }], // Liste de points/bullet points
-    profile_id: { type: Schema.Types.ObjectId, ref: "Profile" }
+    achievements: [{ type: String }],
+    profile_id: { type: Schema.Types.ObjectId, ref: "Profile" },
+    icon: { type: String }, // ← chemin ou URL de l’icône
   },
   { timestamps: true }
 );

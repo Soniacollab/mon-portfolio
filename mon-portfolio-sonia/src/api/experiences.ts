@@ -14,11 +14,12 @@ export interface TExperience {
     name: string;
   }>;
   achievements: string[];
+  icon?: string;
   createdAt: string;
   updatedAt?: string;
 }
 
 export const getExperiences = async (): Promise<TExperience[]> => {
-  const res = await axios.get("http://localhost:5000/api/experiences");
+  const res = await axios.get("http://localhost:5000/api/admin/experiences");
   return res.data;
 };

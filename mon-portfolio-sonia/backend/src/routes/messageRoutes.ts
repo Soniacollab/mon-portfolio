@@ -2,7 +2,7 @@
 import express from "express";
 import { body } from "express-validator";
 import { createMessage, getMessages, deleteMessage } from "../controllers/messageController";
-import { authenticateAdmin } from "../middleware/authMiddleware";
+import { adminAuth } from "../middleware/authMiddleware";
 const router = express.Router();
 
 // POST public - validation simple
@@ -17,7 +17,7 @@ router.post(
 );
 
 // admin
-router.get("/", authenticateAdmin, getMessages);
-router.delete("/:id", authenticateAdmin, deleteMessage);
+router.get("/", adminAuth, getMessages);
+router.delete("/:id", adminAuth, deleteMessage);
 
 export default router;

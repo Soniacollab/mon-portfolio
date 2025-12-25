@@ -36,14 +36,17 @@ export const createExperience = async (req: Request, res: Response) => {
       return res.status(400).json({ message: "Champs requis manquants" });
     }
 
-    // Valide les technologies
+    // Gère le fichier uploadé pour l’icône
+    const iconPath = req.file ? `/uploads/${req.file.filename}` : req.body.icon;
+
+    // Transforme les technologies en ObjectId
     const techIds: mongoose.Types.ObjectId[] = [];
-    if (Array.isArray(technologies) && technologies.length > 0) {
-      for (const tech of technologies) {
+    if (Array.isArray(technologies)) {
+      technologies.forEach((tech: string) => {
         if (mongoose.Types.ObjectId.isValid(tech)) {
           techIds.push(new mongoose.Types.ObjectId(tech));
         }
-      }
+      });
     }
 
     const experience = new Experience({
@@ -52,16 +55,17 @@ export const createExperience = async (req: Request, res: Response) => {
       description,
       type,
       startDate: new Date(startDate),
-      endDate: endDate ? new Date(endDate) : null,
+      endDate: endDate ? new Date(endDate) : undefined,
       location,
       technologies: techIds,
       achievements: Array.isArray(achievements) ? achievements : [],
-      profile_id
+      profile_id,
+      icon: iconPath
     });
 
     await experience.save();
     await experience.populate("technologies");
-    
+
     res.status(201).json(experience);
   } catch (err) {
     console.error("createExperience error:", err);
@@ -72,7 +76,7 @@ export const createExperience = async (req: Request, res: Response) => {
 /** PUT /api/admin/experiences/:id */
 export const updateExperience = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "ID invalide" });
     }
@@ -91,7 +95,8 @@ export const updateExperience = async (req: Request, res: Response) => {
       endDate,
       location,
       technologies,
-      achievements
+      achievements,
+      icon
     } = req.body;
 
     if (title) experience.title = title;
@@ -99,24 +104,31 @@ export const updateExperience = async (req: Request, res: Response) => {
     if (description) experience.description = description;
     if (type) experience.type = type;
     if (startDate) experience.startDate = new Date(startDate);
-    if (endDate) experience.endDate = new Date(endDate);
+    if (endDate !== undefined) experience.endDate = new Date(endDate);
     if (location !== undefined) experience.location = location;
     if (Array.isArray(achievements)) experience.achievements = achievements;
+
+    // Update icon si nouveau fichier uploadé
+    if (req.file) {
+      experience.icon = `/uploads/${req.file.filename}`;
+    } else if (icon !== undefined) {
+      experience.icon = icon;
+    }
 
     // Update technologies
     if (Array.isArray(technologies)) {
       const techIds: mongoose.Types.ObjectId[] = [];
-      for (const tech of technologies) {
+      technologies.forEach((tech: string) => {
         if (mongoose.Types.ObjectId.isValid(tech)) {
           techIds.push(new mongoose.Types.ObjectId(tech));
         }
-      }
+      });
       experience.technologies = techIds;
     }
 
     await experience.save();
     await experience.populate("technologies");
-    
+
     res.json(experience);
   } catch (err) {
     console.error("updateExperience error:", err);
@@ -127,7 +139,7 @@ export const updateExperience = async (req: Request, res: Response) => {
 /** DELETE /api/admin/experiences/:id */
 export const deleteExperience = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
+    const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ message: "ID invalide" });
     }

@@ -7,6 +7,9 @@ import { Typography } from "../../atoms";
 import { config } from "../../../constants/config";
 import { useSkills } from "../../../hooks/useSkills";
 
+const SERVER_URL = "http://localhost:5000";
+const DEFAULT_ICON = `${SERVER_URL}/uploads/skills/icon-1766599236793.png`; // fallback si pas d'icône
+
 const Tech = () => {
   const { skills, error } = useSkills();
 
@@ -23,12 +26,15 @@ const Tech = () => {
     "Three.js",
   ];
 
-  const mainSkills = skills.filter(skill => mainSkillNames.includes(skill.name));
-  const otherSkills = skills.filter(skill => !mainSkillNames.includes(skill.name));
+  const mainSkills = skills.filter((skill) =>
+    mainSkillNames.includes(skill.name)
+  );
+  const otherSkills = skills.filter(
+    (skill) => !mainSkillNames.includes(skill.name)
+  );
 
   return (
     <section className="relative w-full max-w-6xl mx-auto py-12">
-      {/* Ligne de séparation */}
       <Divider />
 
       {/* Titre */}
@@ -52,20 +58,28 @@ const Tech = () => {
 
       {/* Skills principaux 3D */}
       <div className="flex flex-wrap justify-center gap-6 sm:gap-8 md:gap-10 mt-8">
-        {mainSkills.map(skill => (
-          <TechCard key={skill.name} icon={skill.icon} name={skill.name} />
+        {mainSkills.map((skill) => (
+          <TechCard
+            key={skill.name}
+            icon={skill.icon ? `${SERVER_URL}${skill.icon}` : DEFAULT_ICON}
+            name={skill.name}
+          />
         ))}
       </div>
 
-      {/* Skills secondaires en badges cyber/tech */}
-{otherSkills.length > 0 && (
-  <div className="flex flex-wrap justify-center gap-4 mt-6">
-    {otherSkills.map(skill => (
-      <TechCard key={skill.name} name={skill.name} isMain={false} />
-    ))}
-  </div>
-)}
-
+      {/* Skills secondaires en badges */}
+      {otherSkills.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-4 mt-6">
+          {otherSkills.map((skill) => (
+            <TechCard
+              key={skill.name}
+              icon={skill.icon ? `${SERVER_URL}${skill.icon}` : DEFAULT_ICON} // fallback ici aussi
+              name={skill.name}
+              isMain={false}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 };

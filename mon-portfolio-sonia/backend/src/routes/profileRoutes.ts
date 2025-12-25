@@ -1,7 +1,7 @@
 // src/routes/profileRoutes.ts
 import express from "express";
 import { getProfile, updateProfile } from "../controllers/profileController";
-import { authenticateAdmin } from "../middleware/authMiddleware";
+import { adminAuth } from "../middleware/authMiddleware";
 import { uploadFile } from "../middleware/upload";
 const router = express.Router();
 
@@ -9,6 +9,6 @@ const router = express.Router();
 router.get("/", getProfile);
 
 // admin
-router.put("/", authenticateAdmin, uploadFile.single("avatar"), updateProfile);
+router.put("/", adminAuth, uploadFile.single("avatar"), updateProfile);
 
 export default router;

@@ -3,6 +3,7 @@ import Project from "../models/Project";
 import ProjectSkill from "../models/ProjectSkill";
 import Skill from "../models/Skill";
 import mongoose from "mongoose";
+import path from "path";
 
 export const getProjects = async (req: Request, res: Response) => {
   try {
@@ -19,13 +20,25 @@ export const createProject = async (req: Request, res: Response) => {
     const { title, description, link, profile_id, skills } = req.body;
     if (!title) return res.status(400).json({ message: "Le titre est requis" });
 
+    // Vérifier si projet existe déjà
+    const existing = await Project.findOne({ title });
+    if (existing) return res.status(400).json({ message: "Projet déjà existant" });
+
+    // Skills
     const skillIds: mongoose.Types.ObjectId[] = [];
     if (Array.isArray(skills)) {
-      for (const s of skills) {
+      const parsedSkills = typeof skills === "string" ? JSON.parse(skills) : skills;
+      for (const s of parsedSkills) {
         if (!mongoose.Types.ObjectId.isValid(s)) continue;
         const found = await Skill.findById(s);
         if (found) skillIds.push(found._id);
       }
+    }
+
+    // Image
+    let imagePath = "/assets/default-project.png";
+    if (req.file) {
+      imagePath = `/uploads/projects/${req.file.filename}`;
     }
 
     const project = new Project({
@@ -34,8 +47,9 @@ export const createProject = async (req: Request, res: Response) => {
       link,
       profile_id,
       skills: skillIds,
-      image: req.file ? `/uploads/projects/${req.file.filename}` : "/assets/default-project.png"
+      image: imagePath
     });
+
     await project.save();
 
     // Pivot table
@@ -48,7 +62,7 @@ export const createProject = async (req: Request, res: Response) => {
     }
 
     await project.populate("skills");
-    res.status(201).json(project);
+    res.status(201).json({ message: "Projet créé avec succès", project });
   } catch (err) {
     console.error("createProject error:", err);
     res.status(500).json({ message: "Erreur création projet" });
@@ -64,15 +78,24 @@ export const updateProject = async (req: Request, res: Response) => {
     if (!project) return res.status(404).json({ message: "Projet non trouvé" });
 
     const { title, description, link, profile_id, skills } = req.body;
-    if (title) project.title = title;
+
+    if (title && title !== project.title) {
+      const existing = await Project.findOne({ title });
+      if (existing) return res.status(400).json({ message: "Un projet avec ce titre existe déjà" });
+      project.title = title;
+    }
     if (typeof description !== "undefined") project.description = description;
     if (typeof link !== "undefined") project.link = link;
     if (typeof profile_id !== "undefined") project.profile_id = profile_id;
+
+    // Image
     if (req.file) project.image = `/uploads/projects/${req.file.filename}`;
 
+    // Skills
     if (Array.isArray(skills)) {
       const skillIds: mongoose.Types.ObjectId[] = [];
-      for (const s of skills) {
+      const parsedSkills = typeof skills === "string" ? JSON.parse(skills) : skills;
+      for (const s of parsedSkills) {
         if (!mongoose.Types.ObjectId.isValid(s)) continue;
         const found = await Skill.findById(s);
         if (found) skillIds.push(found._id);
@@ -92,7 +115,7 @@ export const updateProject = async (req: Request, res: Response) => {
 
     await project.save();
     await project.populate("skills");
-    res.json(project);
+    res.json({ message: "Projet mis à jour avec succès", project });
   } catch (err) {
     console.error("updateProject error:", err);
     res.status(500).json({ message: "Erreur mise à jour projet" });

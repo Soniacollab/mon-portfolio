@@ -5,7 +5,8 @@ import {
   updateExperience,
   deleteExperience
 } from "../controllers/experienceController";
-import { authenticateAdmin } from "../middleware/authMiddleware";
+import { adminAuth } from "../middleware/authMiddleware";
+import { uploadFile } from "../middleware/upload";
 
 const router = express.Router();
 
@@ -13,8 +14,8 @@ const router = express.Router();
 router.get("/", getExperiences);
 
 // Admin
-router.post("/", authenticateAdmin, createExperience);
-router.put("/:id", authenticateAdmin, updateExperience);
-router.delete("/:id", authenticateAdmin, deleteExperience);
+router.post("/", adminAuth, uploadFile.single("icon"), createExperience);
+router.put("/:id", adminAuth, uploadFile.single("icon"), updateExperience);
+router.delete("/:id", adminAuth , deleteExperience);
 
 export default router;

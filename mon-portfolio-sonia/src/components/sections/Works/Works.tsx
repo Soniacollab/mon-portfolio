@@ -6,22 +6,28 @@ import { ProjectCard } from "../../molecules";
 import { fadeIn } from "../../../utils/motion";
 import { useProjects } from "../../../hooks/useProjects";
 
+const API_BASE = "http://localhost:5000";
+
 const Works = () => {
   const { projects, loading, error } = useProjects();
 
-  if (loading) {
-    return <p className="text-white text-center">Chargement des projets...</p>;
-  }
+  if (loading) return <p className="text-white text-center">Chargement des projets...</p>;
+  if (error) return <p className="text-red-500 text-center">{error}</p>;
 
-  if (error) {
-    return <p className="text-red-500 text-center">{error}</p>;
-  }
+  // Transforme chaque image en URL complète si besoin
+  const projectsWithFullImage = projects.map((p) => ({
+    ...p,
+    image: p.image
+      ? p.image.startsWith("http") // si déjà URL complète
+        ? p.image
+        : `${API_BASE}${p.image}` // sinon ajoute API_BASE
+      : "/placeholder.jpg",
+  }));
 
   return (
     <section>
       <Divider />
 
-      {/* Titre de section */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -40,7 +46,6 @@ const Works = () => {
         </Typography>
       </motion.div>
 
-      {/* Description */}
       <motion.div variants={fadeIn("up", "spring", 0.1, 1)}>
         <Typography
           variant="p"
@@ -50,15 +55,14 @@ const Works = () => {
         </Typography>
       </motion.div>
 
-      {/* Cards */}
       <div className="flex flex-wrap justify-center gap-8">
-        {projects.map((project, index) => (
+        {projectsWithFullImage.map((project, index) => (
           <ProjectCard
             key={project._id}
             index={index}
             name={project.title}
             description={project.description}
-            image={project.image ?? "/placeholder.jpg"}
+            image={project.image}
             sourceCodeLink={project.link ?? "#"}
             tags={
               project.skills?.map((skill) => ({
@@ -67,10 +71,10 @@ const Works = () => {
                   skill.name === "React"
                     ? "text-[#61dafb]"
                     : skill.name === "Node.js"
-                      ? "text-[#3C873A]"
-                      : skill.name === "TypeScript"
-                        ? "text-[#3178C6]"
-                        : "text-white/80", // fallback
+                    ? "text-[#3C873A]"
+                    : skill.name === "TypeScript"
+                    ? "text-[#3178C6]"
+                    : "text-white/80",
               })) || []
             }
           />

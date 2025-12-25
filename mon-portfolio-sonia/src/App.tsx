@@ -1,45 +1,31 @@
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useState } from "react";
 
-import {
-  About,
-  Contact,
-  Experience,
-  Hero,
-  Navbar,
-  Tech,
-  Works,
-  StarsCanvas,
-} from "./components";
-import { useEffect } from "react";
-import { config } from "./constants/config";
-// import Loader from "./components/layout/Loader";
+import AdminLogin from "./components/admin/AdminLogin";
+import AdminDashboard from "./components/admin/AdminDashboard";
+import AdminRoute from "./components/admin/AdminRoute";
+import PublicPage from "./pages/PublicPage";
 
-const App = () => {
-  useEffect(() => {
-    if (document.title !== config.html.title) {
-      document.title = config.html.title;
-    }
-  }, []);
+export default function App() {
+  const [token, setToken] = useState<string | null>(localStorage.getItem("adminToken"));
 
   return (
     <BrowserRouter>
-      {/* <Loader /> */}
-      <div className="bg-primary relative z-0">
-        <div className="bg-hero-pattern bg-cover bg-center bg-no-repeat">
-          <Navbar />
-          <Hero />
-        </div>
-        <About />
-        <Experience />
-        <Tech />
-        <Works />
-        <div className="relative z-0">
-          <Contact />
-          <StarsCanvas />
-        </div>
-      </div>
+      <Routes>
+        {/* Admin */}
+        <Route path="/admin/login" element={<AdminLogin onLogin={setToken} />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          }
+        />
+
+        {/* Portfolio public */}
+        <Route path="/*" element={<PublicPage />} />
+      </Routes>
     </BrowserRouter>
   );
-};
-
-export default App;
+}

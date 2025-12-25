@@ -13,13 +13,12 @@ export interface TProject {
   link?: string;
   image?: string;
   skills?: TSkill[];
-  featured: boolean; // <-- Ajoute
   createdAt: string; // <-- Ajoute
   updatedAt?: string;
 }
 
 // GET tous les projets
 export const getProjects = async (): Promise<TProject[]> => {
-  const res = await axios.get("http://localhost:5000/api/projects");
+  const res = await axios.get("http://localhost:5000/api/admin/projects");
   return res.data;
 };

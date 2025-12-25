@@ -84,7 +84,7 @@ const Experience = () => {
               key={i} 
               title={exp.title}
               companyName={exp.companyName}
-              icon={exp.icon}
+              iconUrl={exp.icon}
               iconBg={exp.iconBg} // <-- N'OUBLIE PAS DE PASSER iconBg !
               date={exp.date}
               points={exp.points}
