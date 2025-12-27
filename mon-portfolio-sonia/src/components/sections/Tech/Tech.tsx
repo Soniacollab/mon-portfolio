@@ -34,7 +34,7 @@ const Tech = () => {
   );
 
   return (
-    <section className="relative w-full max-w-6xl mx-auto py-12">
+    <section className="relative w-full max-w-6xl mx-auto py-8">
       <Divider />
 
       {/* Titre */}

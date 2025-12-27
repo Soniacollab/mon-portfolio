@@ -1,12 +1,10 @@
-import { VerticalTimeline } from "react-vertical-timeline-component";
-import "react-vertical-timeline-component/style.min.css";
+// rendering as responsive cards instead of vertical timeline
 import { SectionWrapper } from "../../../hoc";
 import ExperienceCard from "../../molecules/ExperienceCard/ExperienceCard";
 import { SectionHeader } from "../../molecules/";
 import { Divider, Typography } from "../../atoms";
 import { config } from "../../../constants/config";
 import { useExperiences } from "../../../hooks/useExperiences";
-import parseAchievements from "../../../utils/parseAchievements";
 import thp from "../../../../public/assets/thp.png";
 
 const Experience = () => {
@@ -28,7 +26,7 @@ const Experience = () => {
 
   if (!experiences || experiences.length === 0) {
     return (
-      <section className="relative w-full max-w-6xl mx-auto py-12">
+      <section className="relative w-full max-w-6xl mx-auto py-8">
         <Divider />
         <SectionHeader
           p={config.sections.experience.p}
@@ -43,18 +41,19 @@ const Experience = () => {
   }
 
   return (
-    <section className="relative w-full max-w-6xl mx-auto py-12">
+    <section className="relative w-full max-w-6xl mx-auto py-6">
       <Divider />
       <SectionHeader
         p={config.sections.experience.p}
         h2={config.sections.experience.h2}
-        className="text-center mt-[3rem] mb-6 violet-blue-text-gradient"
+        className="text-center mt-2 mb-6 violet-blue-text-gradient experience-header"
       />
 
-      <VerticalTimeline >
+      <div className="mt-8 grid gap-6 grid-cols-1 md:grid-cols-2">
         {experiences.map((exp, i) => (
           <ExperienceCard
             key={i}
+            plain
             title={exp.title}
             companyName={`${exp.company} - ${
               exp.type === "stage"
@@ -69,14 +68,14 @@ const Experience = () => {
             endDate={exp.endDate}
             points={[
               exp.description,
-              ...parseAchievements(exp.achievements),
+              ...(exp.achievements || []),
               `Technologies : ${exp.technologies?.map((t) => t.name).filter(Boolean).join(", ")}`,
             ].filter((p) => typeof p === "string" && p.trim() !== "")}
             iconUrl={exp.icon ? `http://localhost:5000${exp.icon}` : thp}
-            iconBg="#383E56"
-              />
+            iconBg="#3b3f66"
+          />
         ))}
-      </VerticalTimeline>
+      </div>
     </section>
   );
 };

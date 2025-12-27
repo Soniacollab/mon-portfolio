@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { authAPI } from "../../api/admin";
 
 interface AdminLoginProps {
-  onLogin: Dispatch<SetStateAction<string | null>>;
+  onLogin: Dispatch<SetStateAction<boolean>>;
 }
 
 const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
@@ -20,11 +20,9 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     try {
       const res = await authAPI.login({ email, password }); // axios gère cookies
       if (res.status === 200) {
-        // Met à jour le token dans App
-        const token = res.data.token;
-        onLogin(token); 
-        localStorage.setItem("adminToken", token);
-        navigate("/admin"); 
+        // server set HttpOnly cookie; update auth state
+        onLogin(true);
+        navigate("/admin");
       }
     } catch (err: any) {
       setError(err.response?.data?.message || "Identifiants invalides");

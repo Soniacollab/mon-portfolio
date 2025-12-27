@@ -149,7 +149,7 @@ const handleChange = (
         await fetchList();
         return null;
       } catch {
-        window.location.href = "/admin/login";
+        window.location.href = "/admin/secure-login";
         return null;
       }
     }
@@ -175,7 +175,7 @@ const handleChange = (
           await fetchList();
           return;
         } catch {
-          window.location.href = "/admin/login";
+          window.location.href = "/admin/secure-login";
           return;
         }
       }

@@ -49,7 +49,7 @@ const RobotPlayground = () => {
     <Canvas
       // caméra rapprochée (valeur restaurée)
       camera={{ position: [0, 1.4, 4.5], fov: 35 }}
-      className="absolute inset-0 z-20 pointer-events-auto"
+      className="absolute inset-0 z-20 pointer-events-auto opacity-95"
       // stop propagation so any global contextmenu preventDefault doesn't block the native menu
       onContextMenu={(e) => { e.stopPropagation(); /* don't call preventDefault -> allow native menu */ }}
       gl={{ antialias: true, powerPreference: "high-performance", alpha: true }}

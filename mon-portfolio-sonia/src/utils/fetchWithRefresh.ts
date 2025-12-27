@@ -13,7 +13,7 @@ export const fetchWithRefresh = async (url: string, options: any = {}) => {
       res = await fetch(url, { ...options, credentials: "include" });
     } else {
       alert("Session expirée, veuillez vous reconnecter");
-      window.location.href = "/admin/login";
+      window.location.href = "/admin/secure-login";
       return null;
     }
   }

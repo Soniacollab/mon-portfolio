@@ -14,7 +14,7 @@ const AdminDashboard = () => {
     } catch (err) {
       console.error("Erreur logout", err);
     } finally {
-      window.location.href = "/admin/login"; // redirect
+      window.location.href = "/admin/secure-login"; // redirect
     }
   };
 

@@ -1,19 +1,27 @@
 export const contentStyle = {
-  background: "rgba(17,17,24,0.88)",
-  backdropFilter: "blur(8px)",
-  border: "1px solid rgba(145,94,255,0.25)",
-  borderRadius: "16px",
-  boxShadow: "0 0 22px rgba(145,94,255,0.12)",
+  background: "linear-gradient(180deg, rgba(18,16,28,0.64), rgba(20,18,36,0.6))",
+  backdropFilter: "blur(6px) saturate(110%)",
+  border: "1px solid rgba(145,94,255,0.12)",
+  borderRadius: "14px",
+  boxShadow: "0 12px 34px rgba(3,6,20,0.22)",
   color: "#fff",
-
+  padding: "1.25rem",
+  minHeight: "120px",
 };
 
 export const contentArrowStyle = {
-  borderRight: "8px solid rgba(145,94,255,0.35)",
+  borderRight: "8px solid rgba(145,94,255,0.06)",
 };
 
 export const iconStyle = {
-  background: "linear-gradient(135deg,#915EFF,#00c8ff)",
-  boxShadow: "0 0 18px rgba(145,94,255,0.45)",
+  background: "linear-gradient(135deg, rgba(145,94,255,0.12), rgba(0,200,255,0.06))",
+  boxShadow: "0 6px 18px rgba(145,94,255,0.06)",
+  border: "1px solid rgba(145,94,255,0.14)",
+  width: "56px",
+  height: "56px",
+  borderRadius: "12px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
 };
 

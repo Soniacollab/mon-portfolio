@@ -1,0 +1,37 @@
+flowchart LR
+  Visitor((Visitor))
+  Admin((Admin))
+
+  ViewProfile["View Public Profile"]
+  DownloadCV["Download CV"]
+  ViewProjects["View Projects / Experiences"]
+  ContactForm["Contact via Form"]
+
+  Login["Login"]
+  ManageProjects["Manage Projects"]
+  ManageSkills["Manage Skills"]
+  ManageProfile["Manage Profile"]
+  ViewMessages["View Messages"]
+
+  AddProject["Add Project"]
+  EditProject["Edit Project"]
+  DeleteProject["Delete Project"]
+
+  Visitor --> ViewProfile
+  Visitor --> DownloadCV
+  Visitor --> ViewProjects
+  Visitor --> ContactForm
+
+  Admin --> Login
+  Admin --> ManageProjects
+  Admin --> ManageSkills
+  Admin --> ManageProfile
+  Admin --> ViewMessages
+
+  ManageProjects --> AddProject
+  ManageProjects --> EditProject
+  ManageProjects --> DeleteProject
+
+  AddProject -.->|"<<include>>"| ManageProjects
+  EditProject -.->|"<<include>>"| ManageProjects
+  DeleteProject -.->|"<<include>>"| ManageProjects

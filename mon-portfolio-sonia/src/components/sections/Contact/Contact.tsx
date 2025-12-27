@@ -7,7 +7,7 @@ import { config } from "../../../constants/config";
 
 const Contact = () => {
   return (
-    <div className="flex flex-col items-center gap-8 w-full px-4 md:px-12 xl:px-20 py-12">
+    <div className="flex flex-col items-center gap-8 w-full px-4 md:px-12 xl:px-20 py-8">
       <Typography
         variant="h2"
         className="text-center mb-2 bg-gradient-to-r from-[#915EFF] via-[#7dd3fc] to-[#00c8ff] bg-clip-text text-transparent"

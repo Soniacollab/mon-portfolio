@@ -146,11 +146,34 @@ export default function ProfileTab() {
           { label: "Bio", name: "bio", value: state.profile.bio || "", isTextarea: true },
         ]}
         fileField={{ name: "avatar", label: "Avatar", preview: avatarPreview }}
-        fileFieldCV={{ name: "cv", label: "CV", preview: cvPreview, onDownload: handleDownload }} // décommenter si upload CV
         onChange={handleChange}
         onSubmit={handleSubmit}
         submitLabel="Sauvegarder"
       />
+
+      {/* CV upload + download (admin only) */}
+      <div className="flex flex-col">
+        <label htmlFor={`cv-file`} className="mb-2 font-medium text-white">CV</label>
+        <input
+          id={`cv-file`}
+          type="file"
+          name="cv"
+          onChange={handleChange}
+          title={`Upload CV`}
+          aria-label={`Upload CV`}
+          className="bg-[rgba(0,0,0,0.5)] border border-[rgba(145,94,255,0.25)] rounded-lg px-4 py-2 text-white outline-none focus:border-[#915EFF] focus:ring-1 focus:ring-[#915EFF] transition"
+        />
+        {cvPreview && (
+          <a
+            href={cvPreview}
+            onClick={handleDownload}
+            download
+            className="mt-2 text-sm text-sky-400 underline"
+          >
+            Télécharger le CV
+          </a>
+        )}
+      </div>
     </div>
   );
 }

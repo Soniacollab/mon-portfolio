@@ -1,0 +1,52 @@
+%% Mermaid ER Diagram template (MCD/MLD starter)
+
+```mermaid
+erDiagram
+    PROFILE {
+        ObjectId _id PK
+        string fullName
+        string title
+        string bio
+        string cvPath
+    }
+    EXPERIENCE {
+        ObjectId _id PK
+        string title
+        string company
+        string startDate
+        string endDate
+        string description
+        ObjectId profileId FK
+    }
+    PROJECT {
+        ObjectId _id PK
+        string title
+        string description
+        string link
+        string imagePath
+        ObjectId profileId FK
+    }
+    SKILL {
+        ObjectId _id PK
+        string name
+        string category
+    }
+    PROJECT_SKILL {
+        ObjectId _id PK
+        ObjectId projectId FK
+        ObjectId skillId FK
+    }
+    CONTACT {
+        ObjectId _id PK
+        string name
+        string email
+        string message
+        date createdAt
+    }
+
+    PROFILE ||--o{ EXPERIENCE : "has"
+    PROFILE ||--o{ PROJECT : "owns"
+    PROJECT ||--o{ PROJECT_SKILL : "uses"
+    SKILL ||--o{ PROJECT_SKILL : "used in"
+```
+```

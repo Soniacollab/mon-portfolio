@@ -10,12 +10,6 @@ interface FormCardProps {
     label: string;
     preview?: string | null;
   };
-  fileFieldCV?: {
-    name: string;
-    label: string;
-    preview?: string | null; // URL pour téléchargement
-    onDownload?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
-  };
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => void;
@@ -28,7 +22,6 @@ const FormCard: React.FC<FormCardProps> = ({
   title,
   fields,
   fileField,
-  fileFieldCV,
   onChange,
   onSubmit,
   submitLabel = "Envoyer",
@@ -68,33 +61,6 @@ const FormCard: React.FC<FormCardProps> = ({
               alt={`Preview of ${fileField.label}`}
               className="w-40 h-40 object-cover rounded mt-2 border border-gray-400"
             />
-          )}
-        </div>
-      )}
-
-      {fileFieldCV && (
-        <div className="flex flex-col">
-          <label htmlFor={`${formId}-file-${fileFieldCV.name}`} className="mb-2 font-medium text-white">
-            {fileFieldCV.label}
-          </label>
-          <input
-            id={`${formId}-file-${fileFieldCV.name}`}
-            type="file"
-            name={fileFieldCV.name}
-            onChange={onChange}
-            title={`Upload ${fileFieldCV.label}`}
-            aria-label={`Upload ${fileFieldCV.label}`}
-            className="bg-[rgba(0,0,0,0.5)] border border-[rgba(145,94,255,0.25)] rounded-lg px-4 py-2 text-white outline-none focus:border-[#915EFF] focus:ring-1 focus:ring-[#915EFF] transition"
-          />
-          {fileFieldCV.preview && (
-            <a
-              href={fileFieldCV.preview}
-              onClick={fileFieldCV.onDownload}
-              download
-              className="mt-2 text-sm text-sky-400 underline"
-            >
-              Télécharger le CV
-            </a>
           )}
         </div>
       )}

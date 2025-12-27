@@ -1,0 +1,18 @@
+usecaseDiagram
+  actor Visitor
+  actor Admin
+
+  Visitor --> (View Public Profile)
+  Visitor --> (Download CV)
+  Visitor --> (View Projects / Experiences)
+  Visitor --> (Contact via Form)
+
+  Admin --> (Login)
+  Admin --> (Manage Projects)
+  Admin --> (Manage Skills)
+  Admin --> (Manage Profile)
+  Admin --> (View Messages)
+
+  (Manage Projects) ..> (Add Project) : <<include>>
+  (Manage Projects) ..> (Edit Project) : <<include>>
+  (Manage Projects) ..> (Delete Project) : <<include>>

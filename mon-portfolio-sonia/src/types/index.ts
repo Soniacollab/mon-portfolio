@@ -17,6 +17,12 @@ export interface TExperience {
   icon?: string;
   createdAt: string;
   updatedAt?: string;
+
+  /* Frontend-friendly optional fields (used in demo constants) */
+  companyName?: string;
+  points?: string[];
+  iconBg?: string;
+  date?: string;
 }
 
 export interface TSkill {
@@ -48,4 +54,23 @@ export interface TProject {
   createdAt: string;
   updatedAt?: string;
 }
+
+export type TNavLink = { id: string; title: string };
+
+export type TService = { title: string; icon: string };
+
+export interface TTestimonial {
+  testimonial: string;
+  name: string;
+  designation: string;
+  company: string;
+  image: string;
+}
+
+export type TMotion = {
+  direction: 'left' | 'right' | 'up' | 'down' | '';
+  type: string;
+  delay: number;
+  duration: number;
+};
 

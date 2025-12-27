@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="MPD" id="mpd1">
+    <![CDATA[
+    <mxGraphModel dx="1116" dy="686" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- PROFILE physical -->
+        <mxCell id="p" value="&lt;div&gt;&lt;b&gt;PROFILE&lt;/b&gt;&lt;/div&gt;&lt;div&gt;_id : OBJECTID PK&lt;br/>fullName : VARCHAR(255)&lt;br/>title : VARCHAR(255)&lt;br/>bio : TEXT&lt;br/>cvPath : VARCHAR(512)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="320" height="160" as="geometry"/>
+        </mxCell>
+
+        <!-- EXPERIENCE physical -->
+        <mxCell id="e" value="&lt;div&gt;&lt;b&gt;EXPERIENCE&lt;/b&gt;&lt;/div&gt;&lt;div&gt;_id : OBJECTID PK&lt;br/>title : VARCHAR(255)&lt;br/>company : VARCHAR(255)&lt;br/>startDate : DATE&lt;br/>endDate : DATE&lt;br/>description : TEXT&lt;br/>profileId : OBJECTID FK&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="400" y="60" width="380" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- PROJECT physical -->
+        <mxCell id="pr" value="&lt;div&gt;&lt;b&gt;PROJECT&lt;/b&gt;&lt;/div&gt;&lt;div&gt;_id : OBJECTID PK&lt;br/>title : VARCHAR(255)&lt;br/>description : TEXT&lt;br/>link : VARCHAR(512)&lt;br/>imagePath : VARCHAR(512)&lt;br/>profileId : OBJECTID FK&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="380" height="200" as="geometry"/>
+        </mxCell>
+
+        <!-- SKILL physical -->
+        <mxCell id="s" value="&lt;div&gt;&lt;b&gt;SKILL&lt;/b&gt;&lt;/div&gt;&lt;div&gt;_id : OBJECTID PK&lt;br/>name : VARCHAR(255)&lt;br/>category : VARCHAR(100)&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="460" y="300" width="320" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- PROJECT_SKILL physical -->
+        <mxCell id="ps" value="&lt;div&gt;&lt;b&gt;PROJECT_SKILL&lt;/b&gt;&lt;/div&gt;&lt;div&gt;_id : OBJECTID PK&lt;br/>projectId : OBJECTID FK&lt;br/>skillId : OBJECTID FK&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="260" y="500" width="360" height="140" as="geometry"/>
+        </mxCell>
+
+        <!-- Edges with French labels -->
+        <mxCell id="r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="p" target="e">
+          <mxGeometry relative="1" as="geometry"/>
+          <mxCell as="value">1..* possède</mxCell>
+        </mxCell>
+
+        <mxCell id="r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="p" target="pr">
+          <mxGeometry relative="1" as="geometry"/>
+          <mxCell as="value">1..* possède</mxCell>
+        </mxCell>
+
+        <mxCell id="r3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="pr" target="ps">
+          <mxGeometry relative="1" as="geometry"/>
+          <mxCell as="value">1..* utilise</mxCell>
+        </mxCell>
+
+        <mxCell id="r4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;" edge="1" parent="1" source="ps" target="s">
+          <mxGeometry relative="1" as="geometry"/>
+          <mxCell as="value">* utilisé par</mxCell>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+    ]]>
+  </diagram>
+</mxfile>

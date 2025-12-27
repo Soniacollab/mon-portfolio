@@ -21,7 +21,7 @@ api.interceptors.response.use(
         await api.post("/admin/auth/refresh-token");
         return api(originalRequest);
       } catch {
-        window.location.href = "/admin/login";
+        window.location.href = "/admin/secure-login";
         return Promise.reject(error);
       }
     }
@@ -124,6 +124,12 @@ export const uploadAPI = {
     formData.append("image", file);
     return api.post(`/admin/upload/${type}`, formData, { headers: { "Content-Type": "multipart/form-data" } });
   },
+};
+
+//------------------------- Pour le formulaire de contact public --------------------//
+export const contactAPI = {
+  // Envoie un message depuis le site public vers /api/contact
+  send: (payload: { name: string; email: string; message: string }) => api.post("/contact", payload),
 };
 
 export default api;

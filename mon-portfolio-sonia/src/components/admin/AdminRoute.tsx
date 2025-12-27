@@ -40,7 +40,7 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   }
 
   if (!ok) {
-    return <Navigate to="/admin/login" replace />;
+    return <Navigate to="/admin/secure-login" replace />;
   }
 
   return children;
