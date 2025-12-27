@@ -1,140 +1,144 @@
-import { useEffect, useState, useRef } from "react";
-import TechCard from "../../molecules/TechCard/TechCard";
-import FormRow from "../../molecules/ContactForm/FormRow";
-import { Button, Input } from "../../atoms";
-import { TSkill, getSkills } from "../../../api/skills";
+import { useState } from "react";
+import ExperienceCard from "../../molecules/ExperienceCard/ExperienceCard";
+import FormCard from "../../molecules/ContactForm/FormCard";
+import { useFormManager } from "../../../hooks/useFormManager";
+import { experienceAPI } from "../../../api/admin";
+import { TExperience } from "../../../types";
 
-const SERVER_URL = "http://localhost:5000";
-const DEFAULT_ICON = `${SERVER_URL}/uploads/skills/icon-1766599236793.png`;
+const API_URL = "http://localhost:5000";
 
-export default function SkillsTab() {
-  const [skills, setSkills] = useState<TSkill[]>([]);
-  const [form, setForm] = useState({
-    name: "",
-    iconFile: null as File | null,
-    iconPath: DEFAULT_ICON, // fallback par défaut
-    technique: true,
+export default function ExperienceTab() {
+  const [experiences, setExperiences] = useState<TExperience[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const {
+    form,
+    handleChange,
+    handleSubmit,
+    handleEdit,
+    handleDelete,
+    editingId,
+    errors,
+    setForm,
+    formRef,
+  } = useFormManager({
+    defaultForm: {
+      title: "",
+      companyName: "",
+      description: "",
+      type: "job",
+      startDate: "",
+      endDate: "",
+      points: [] as string[],
+      icon: null as File | string | null,
+    },
+    api: experienceAPI,
+    fetchList: async () => {
+      const data = await experienceAPI.getAll();
+      setExperiences(data);
+    },
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const formRef = useRef<HTMLDivElement>(null);
 
-  const fetchSkills = async () => {
-    const data = await getSkills();
-    setSkills(data);
-  };
+  // Aperçu d’icône
+  const iconPreview =
+    form.icon instanceof File
+      ? URL.createObjectURL(form.icon)
+      : typeof form.icon === "string"
+      ? `${API_URL}${form.icon}`
+      : undefined;
 
-  useEffect(() => {
-    fetchSkills();
-  }, []);
+  // Soumission du formulaire
+  const onSubmit = async () => {
+    setSuccessMessage(null);
+    setErrorMessage(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const target = e.target as HTMLInputElement;
-    const { name, type, checked, files, value } = target;
-
-    if (type === "checkbox") {
-      setForm(prev => ({ ...prev, [name]: checked }));
-      return;
+    const apiErrors = await handleSubmit();
+    if (!apiErrors) {
+      setSuccessMessage(editingId ? "Expérience modifiée !" : "Expérience ajoutée !");
+      setForm({
+        title: "",
+        companyName: "",
+        description: "",
+        type: "job",
+        startDate: "",
+        endDate: "",
+        points: [],
+        icon: null,
+      });
+    } else {
+      setErrorMessage("Veuillez corriger les erreurs ci-dessous.");
     }
+  };
 
-    if (type === "file" && files && files[0]) {
-      const file = files[0];
-      setForm(prev => ({
-        ...prev,
-        iconFile: file,
-        iconPath: URL.createObjectURL(file),
-      }));
-      return;
+  // Éditer une expérience
+  const onEdit = (exp: TExperience) => {
+    const formReady = {
+      title: exp.title || "",
+      companyName: exp.company || "",
+      description: exp.description || "",
+      type: exp.type || "job",
+      startDate: exp.startDate ? exp.startDate.split("T")[0] : "",
+      endDate: exp.endDate ? exp.endDate.split("T")[0] : "",
+      points: exp.achievements || [],
+      icon: exp.icon || null,
+    };
+    setForm(formReady);
+    handleEdit({ ...formReady, _id: exp._id });
+    formRef.current?.scrollIntoView({ behavior: "smooth" });
+    setSuccessMessage(null);
+    setErrorMessage(null);
+  };
+
+  // Supprimer une expérience
+  const onDelete = async (id: string) => {
+    if (!confirm("Supprimer cette expérience ?")) return;
+    try {
+      await handleDelete(id);
+      setSuccessMessage("Expérience supprimée !");
+    } catch (err) {
+      console.error(err);
+      setErrorMessage("Erreur lors de la suppression");
     }
-
-    setForm(prev => ({ ...prev, [name]: value }));
   };
-
-  const handleSubmit = async () => {
-    if (!form.name) return alert("Nom requis");
-
-    const method = editingId ? "PUT" : "POST";
-    const url = editingId
-      ? `${SERVER_URL}/api/admin/skills/${editingId}`
-      : `${SERVER_URL}/api/admin/skills`;
-
-    const formData = new FormData();
-    formData.append("name", form.name);
-    formData.append("technique", String(form.technique));
-    if (form.iconFile) formData.append("icon", form.iconFile);
-
-    const res = await fetch(url, { method, body: formData, credentials: "include" });
-    if (!res.ok) return alert("Erreur serveur : " + res.status);
-
-    setForm({ name: "", iconFile: null, iconPath: DEFAULT_ICON, technique: true });
-    setEditingId(null);
-    fetchSkills();
-  };
-
-  const handleEdit = (skill: TSkill) => {
-    setForm({
-      name: skill.name,
-      iconFile: null,
-      iconPath: skill.icon ? `${SERVER_URL}${skill.icon}` : DEFAULT_ICON, // fallback
-      technique: skill.technique,
-    });
-    setEditingId(skill._id);
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Supprimer cette compétence ?")) return;
-    await fetch(`${SERVER_URL}/api/admin/skills/${id}`, { method: "DELETE", credentials: "include" });
-    fetchSkills();
-  };
-
-  const mainSkills = skills.filter(s => s.technique);
-  const otherSkills = skills.filter(s => !s.technique);
 
   return (
     <div className="flex flex-col gap-8">
-      {/* FORM */}
-      <div ref={formRef} className="p-4 border rounded bg-[rgba(0,0,0,0.3)] flex flex-col gap-3">
-        <FormRow label="Nom" name="name" value={form.name} onChange={handleChange} />
-        <div className="flex flex-col">
-          <label className="text-white mb-1">Icône</label>
-          <Input type="file" onChange={handleChange} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Input type="checkbox" name="technique" checked={form.technique} onChange={handleChange} />
-          <label className="text-white">Compétence technique</label>
-        </div>
-        <Button onClick={handleSubmit} label={editingId ? "Modifier" : "Ajouter"} />
-      </div>
+      <FormCard
+        title={editingId ? "Modifier Expérience" : "Ajouter Expérience"}
+        fields={[
+          { label: "Titre", name: "title", value: form.title, error: errors.title },
+          { label: "Entreprise", name: "companyName", value: form.companyName, error: errors.companyName },
+          { label: "Description", name: "description", value: form.description, isTextarea: true, error: errors.description },
+          { label: "Type", name: "type", value: form.type, error: errors.type },
+          { label: "Date de début", name: "startDate", value: form.startDate, type: "date", error: errors.startDate },
+          { label: "Date de fin", name: "endDate", value: form.endDate, type: "date", error: errors.endDate },
+          { label: "Réalisations (séparées par ,)", name: "points", value: form.points.join(","), isTextarea: true, error: errors.points },
+        ]}
+        fileField={{ name: "icon", label: "Icône", preview: iconPreview }}
+        onChange={handleChange}
+        onSubmit={onSubmit}
+        submitLabel={editingId ? "Modifier" : "Ajouter"}
+      />
 
-      {/* SKILLS */}
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-wrap justify-center gap-6 sm:gap-8 md:gap-10">
-          {mainSkills.map(skill => (
-            <TechCard
-              key={skill._id}
-              name={skill.name}
-              icon={skill.icon ? `${SERVER_URL}${skill.icon}` : DEFAULT_ICON} // fallback
-              isMain={true}
-              onEdit={() => handleEdit(skill)}
-              onDelete={() => handleDelete(skill._id)}
-            />
-          ))}
-        </div>
+      {successMessage && <p className="text-green-400 text-sm font-medium">{successMessage}</p>}
+      {errorMessage && <p className="text-red-400 text-sm font-medium">{errorMessage}</p>}
 
-        {otherSkills.length > 0 && (
-          <div className="flex flex-wrap justify-center gap-4">
-            {otherSkills.map(skill => (
-              <TechCard
-                key={skill._id}
-                name={skill.name}
-                icon={skill.icon ? `${SERVER_URL}${skill.icon}` : DEFAULT_ICON} // fallback
-                isMain={false}
-                onEdit={() => handleEdit(skill)}
-                onDelete={() => handleDelete(skill._id)}
-              />
-            ))}
-          </div>
-        )}
+      <div className="flex flex-col gap-4">
+        {experiences.map(exp => (
+          <ExperienceCard
+            key={exp._id}
+            title={exp.title}
+            companyName={exp.company}
+            startDate={exp.startDate}
+            endDate={exp.endDate}
+            points={exp.achievements || []}
+            iconUrl={exp.icon ? `${API_URL}${exp.icon}` : undefined}
+            iconBg="#333"
+            onEdit={() => onEdit(exp)}
+            onDelete={() => onDelete(exp._id)}
+          />
+        ))}
       </div>
     </div>
   );

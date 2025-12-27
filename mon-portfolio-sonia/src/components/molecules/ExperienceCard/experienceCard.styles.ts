@@ -5,8 +5,7 @@ export const contentStyle = {
   borderRadius: "16px",
   boxShadow: "0 0 22px rgba(145,94,255,0.12)",
   color: "#fff",
-  width: "900px",
-  maxWidth: "90%",
+
 };
 
 export const contentArrowStyle = {

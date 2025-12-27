@@ -1,58 +1,73 @@
-import { Request, Response } from "express";
+//------------------------- Project Controller ----------------------//
+
+import e, { Request, Response } from "express";
+import mongoose from "mongoose";
 import Project from "../models/Project";
 import ProjectSkill from "../models/ProjectSkill";
 import Skill from "../models/Skill";
-import mongoose from "mongoose";
-import path from "path";
 
+
+/************************************************************** 
+ *                GET /api/projects/:id
+ *            Récupération de tous les projets 
+ **************************************************************/
 export const getProjects = async (req: Request, res: Response) => {
   try {
-    const projects = await Project.find().populate("skills").sort({ createdAt: -1 }).lean();
+    const projects = await Project.find()
+      .populate("skills")
+      .sort({ createdAt: -1 })
+      .lean();
+
     res.json(projects);
   } catch (err) {
-    console.error("getProjects error:", err);
+    console.error("getProjects erreur:", err);
     res.status(500).json({ message: "Erreur récupération projets" });
   }
 };
 
+
+
+/************************************************************** 
+ *                 GET /api/projects/:id
+ *               Création d'un nouveau projet
+ **************************************************************/
 export const createProject = async (req: Request, res: Response) => {
   try {
+    // On récupère les données du corps de la requête
     const { title, description, link, profile_id, skills } = req.body;
-    if (!title) return res.status(400).json({ message: "Le titre est requis" });
 
-    // Vérifier si projet existe déjà
+    // Si un projet avec le même titre existe déjà, on renvoie une erreur
     const existing = await Project.findOne({ title });
-    if (existing) return res.status(400).json({ message: "Projet déjà existant" });
+    if (existing) return res.status(400).json({ message: "Projet déjà existant !" });
 
-    // Skills
+    // On vérifie que les skills existent et on prépare leurs IDs
     const skillIds: mongoose.Types.ObjectId[] = [];
-    if (Array.isArray(skills)) {
-      const parsedSkills = typeof skills === "string" ? JSON.parse(skills) : skills;
-      for (const s of parsedSkills) {
-        if (!mongoose.Types.ObjectId.isValid(s)) continue;
-        const found = await Skill.findById(s);
-        if (found) skillIds.push(found._id);
+    if (skills) {
+      for (const s of skills) {
+        const exists = await Skill.findById(s);
+        if (exists) skillIds.push(exists._id);
       }
     }
 
-    // Image
-    let imagePath = "/assets/default-project.png";
-    if (req.file) {
-      imagePath = `/uploads/projects/${req.file.filename}`;
-    }
+    // On gère l'upload de l'image dans le dossier approprié
+    const imagePath = req.file
+      ? `/uploads/projects/${req.file.filename}`
+      : "/assets/default-project.png";
 
+    // On crée le projet ici
     const project = new Project({
       title,
       description,
       link,
       profile_id,
       skills: skillIds,
-      image: imagePath
+      image: imagePath,
     });
 
+    // On save le projet dans la bdd
     await project.save();
 
-    // Pivot table
+    // On crée les associations dans ProjectSkill
     for (const sid of skillIds) {
       await ProjectSkill.updateOne(
         { project_id: project._id, skill_id: sid },
@@ -61,6 +76,7 @@ export const createProject = async (req: Request, res: Response) => {
       );
     }
 
+    // Après création, on renvoie le projet créé avec les skills associées
     await project.populate("skills");
     res.status(201).json({ message: "Projet créé avec succès", project });
   } catch (err) {
@@ -69,41 +85,53 @@ export const createProject = async (req: Request, res: Response) => {
   }
 };
 
+
+
+/************************************************************** 
+ *                PUT /api/admin/projects/:id
+ *              Mise à jour d'un projet existant
+ **************************************************************/
 export const updateProject = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID projet invalide" });
 
-    const project = await Project.findById(id);
+    // D'abord, on vérifie que le projet existe
+    const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: "Projet non trouvé" });
 
+    //On récupère les données à mettre à jour
     const { title, description, link, profile_id, skills } = req.body;
 
+    // Vérifier si projet avec même titre existe déjà
     if (title && title !== project.title) {
       const existing = await Project.findOne({ title });
       if (existing) return res.status(400).json({ message: "Un projet avec ce titre existe déjà" });
       project.title = title;
     }
-    if (typeof description !== "undefined") project.description = description;
-    if (typeof link !== "undefined") project.link = link;
-    if (typeof profile_id !== "undefined") project.profile_id = profile_id;
 
-    // Image
+    // On met à jour les autres champs si fournis
+    if (description !== undefined) project.description = description;
+    if (link !== undefined) project.link = link;
+    if (profile_id !== undefined) project.profile_id = profile_id;
     if (req.file) project.image = `/uploads/projects/${req.file.filename}`;
 
-    // Skills
-    if (Array.isArray(skills)) {
+    // On gère les skills associés au projet
+    if (skills) {
       const skillIds: mongoose.Types.ObjectId[] = [];
-      const parsedSkills = typeof skills === "string" ? JSON.parse(skills) : skills;
-      for (const s of parsedSkills) {
-        if (!mongoose.Types.ObjectId.isValid(s)) continue;
-        const found = await Skill.findById(s);
-        if (found) skillIds.push(found._id);
+      for (const s of skills) {
+        const foundSkills = await Skill.findById(s);
+        if (foundSkills) skillIds.push(foundSkills._id);
       }
+
+      // On met à jour la liste des skills du projet
       project.skills = skillIds;
 
-      // sync pivot
-      await ProjectSkill.deleteMany({ project_id: project._id, skill_id: { $nin: skillIds } });
+      // On met à jour les associations dans ProjectSkill
+      await ProjectSkill.deleteMany({
+        project_id: project._id,
+        skill_id: { $nin: skillIds },
+      });
+
+      // On ajoute les nouvelles associations
       for (const sid of skillIds) {
         await ProjectSkill.updateOne(
           { project_id: project._id, skill_id: sid },
@@ -113,6 +141,7 @@ export const updateProject = async (req: Request, res: Response) => {
       }
     }
 
+    // Et enfin on save les modifications
     await project.save();
     await project.populate("skills");
     res.json({ message: "Projet mis à jour avec succès", project });
@@ -122,14 +151,20 @@ export const updateProject = async (req: Request, res: Response) => {
   }
 };
 
+
+
+/************************************************************** 
+ *                DELETE /api/admin/projects/:id
+ *               Suppression d'un projet 
+ **************************************************************/
 export const deleteProject = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID projet invalide" });
 
-    const project = await Project.findByIdAndDelete(id);
+    // D'abord, on vérifie que le projet existe
+    const project = await Project.findByIdAndDelete(req.params.id);
     if (!project) return res.status(404).json({ message: "Projet non trouvé" });
 
+    // On supprime les associations dans ProjectSkill cad projet et skills liés
     await ProjectSkill.deleteMany({ project_id: project._id });
     res.json({ message: "Projet supprimé" });
   } catch (err) {

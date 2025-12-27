@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { getProjects, TProject } from "../api/projects";
+import { useState, useEffect } from "react";
+import { projectAPI } from "../api/admin";
+import { TProject } from "../types";
 
 export const useProjects = () => {
   const [projects, setProjects] = useState<TProject[]>([]);
@@ -9,10 +10,9 @@ export const useProjects = () => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const data = await getProjects();
-        console.log("data reçue de l'API projects:", data); // 🔥 pour debug
-        setProjects(Array.isArray(data) ? data : []);
-      } catch (err: any) {
+        const data = await projectAPI.getAll();
+        setProjects(data);
+      } catch (err) {
         console.error("Erreur fetch projects:", err);
         setError("Impossible de récupérer les projets");
       } finally {

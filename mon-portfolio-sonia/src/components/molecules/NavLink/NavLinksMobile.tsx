@@ -1,7 +1,8 @@
 import React from "react";
 import { navLinks } from "../../../constants/config";
 import MenuToggle from "../../atoms/MenuToggle";
-import { menu, close } from "../../../assets";
+import menu from "../../../../public/assets/menu.svg";
+import close from "../../../../public/assets/close.svg";
 
 
 interface NavLinksMobileProps {

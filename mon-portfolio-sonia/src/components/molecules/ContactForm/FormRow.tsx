@@ -1,55 +1,35 @@
-import React from "react";
-import { Typography, Input } from "../../atoms";
+import React, { useId } from "react";
+import { Typography } from "../../atoms";
+import { InputProps } from "../../atoms/Input";
+import Input from "../../atoms/Input";
 
-interface FormRowProps {
+export interface FormRowProps extends Omit<InputProps, "options"> {
   label: string;
-  name: string;
-  value?: string;
-  placeholder?: string;
-  type?: string;
-  title?: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  isTextarea?: boolean;
-  checked?: boolean;
+  error?: string;
+  options?: { value: string; label: string }[];
 }
 
 const FormRow: React.FC<FormRowProps> = ({
   label,
-  name,
-  value,
-  placeholder,
-  type = "text",
-  title,
-  onChange,
-  isTextarea = false,
-  checked,
+  options,
+  ...inputProps
 }) => {
-  const Component = Input; // atom Input gère textarea via isTextarea
-
-  // Définir autocomplete uniquement pour input
-  const autoCompleteValue = type === "password"
-    ? "current-password"
-    : type === "email"
-    ? "email"
-    : "username";
+  const uniqueId = useId().replace(/:/g, "-");
+  const inputId = `input-${inputProps.name}-${uniqueId}`;
 
   return (
     <div className="flex flex-col">
       <Typography variant="p" className="mb-2 font-medium text-white">
-        {label}
+        <label htmlFor={inputId}>{label}</label>
       </Typography>
-      <Component
-        name={name}
-        type={type}
-        value={value}
-        title={title}
-        placeholder={placeholder}
-        onChange={onChange}
-        isTextarea={isTextarea}
-        checked={checked}
-        {...(!isTextarea && { autoComplete: autoCompleteValue })}
-        className="bg-[rgba(0,0,0,0.5)] placeholder-gray-300 border border-[rgba(145,94,255,0.25)] rounded-lg px-4 py-3 text-white outline-none focus:border-[#915EFF] focus:ring-1 focus:ring-[#915EFF] transition"
+      <Input
+        {...inputProps}
+        id={inputId}
+        options={options}
       />
+      {inputProps.error && (
+        <p className="text-red-400 text-sm mt-1">{inputProps.error}</p>
+      )}
     </div>
   );
 };

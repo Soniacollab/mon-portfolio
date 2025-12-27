@@ -1,16 +1,48 @@
-// src/routes/projectRoutes.ts
 import express from "express";
-import { getProjects, createProject, updateProject, deleteProject } from "../controllers/projectController";
+import {
+  getProjects,
+  createProject,
+  updateProject,
+  deleteProject,
+} from "../controllers/projectController";
 import { adminAuth } from "../middleware/authMiddleware";
 import { uploadFile } from "../middleware/upload";
+import {
+  validateCreateProject,
+  validateUpdateProject,
+} from "../middleware/validateProject";
+import { validateObjectId } from "../middleware/validateObjectId";
+
 const router = express.Router();
 
-// public
+// -- GET /api/projects -- // (public)
 router.get("/", getProjects);
 
-// admin
-router.post("/", adminAuth, uploadFile.single("image"), createProject);
-router.put("/:id", adminAuth, uploadFile.single("image"), updateProject);
-router.delete("/:id", adminAuth, deleteProject);
+// -- POST /api/projects/admin -- // (pour admin only)
+router.post(
+  "/admin",
+  adminAuth,
+  uploadFile.single("image"),
+  validateCreateProject,
+  createProject
+);
+
+// -- PUT /api/projects/admin/:id -- // (pour admin only)
+router.put(
+  "/admin/:id",
+  adminAuth,
+  validateObjectId("id"),
+  uploadFile.single("image"),
+  validateUpdateProject,
+  updateProject
+);
+
+// -- DELETE /api/projects/admin/:id -- // (pour admin only)
+router.delete(
+  "/admin/:id",
+  adminAuth,
+  validateObjectId("id"),
+  deleteProject
+);
 
 export default router;

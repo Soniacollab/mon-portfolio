@@ -1,96 +1,128 @@
+// src/api/admin.ts
 import axios, { AxiosRequestConfig, AxiosError } from "axios";
+import { TExperience, TProject, TSkill, TProfile } from "../types";
 
 const API_URL = "http://localhost:5000/api";
 
-// Création de l'instance axios
 const api = axios.create({
   baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  withCredentials: true, // ✅ indispensable pour cookie HttpOnly
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
 // Intercepteur pour gérer le refresh token
 api.interceptors.response.use(
-  response => response,
+  (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
-    
-    // Si 401 et pas encore retry
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        await api.post("/admin/auth/refresh-token"); // rafraîchit le token
-        return api(originalRequest); // retry request initiale
+        await api.post("/admin/auth/refresh-token");
+        return api(originalRequest);
       } catch {
-        window.location.href = "/admin/login"; // redirect si refresh invalide
+        window.location.href = "/admin/login";
         return Promise.reject(error);
       }
     }
-
     return Promise.reject(error);
   }
 );
 
-// ===== API ADMIN =====
+/*********************************************************************
+                          ===== API ADMIN =====
+ *********************************************************************/
 
-// Expériences
+//------------------------- Pour les expériences --------------------//
 export const experienceAPI = {
-  getAll: () => api.get("/admin/experiences"),
-  create: (data: any) => api.post("/admin/experiences", data),
-  update: (id: string, data: any) => api.put(`/admin/experiences/${id}`, data),
-  delete: (id: string) => api.delete(`/admin/experiences/${id}`),
+  getAll: async (): Promise<TExperience[]> => {
+    const res = await api.get("/experiences");
+    return res.data;
+  },
+  create: (data: FormData) =>
+    api.post("/experiences/admin/", data, { headers: { "Content-Type": "multipart/form-data" } }),
+  update: (id: string, data: FormData) =>
+    api.put(`/experiences/admin/${id}`, data, { headers: { "Content-Type": "multipart/form-data" } }),
+  delete: (id: string) => api.delete(`/experiences/admin/${id}`),
 };
 
-// Projets
+//------------------------- Pour les projets --------------------//
 export const projectAPI = {
-  getAll: () => api.get("/admin/projects"),
-  create: (data: any) => api.post("/admin/projects", data),
-  update: (id: string, data: any) => api.put(`/admin/projects/${id}`, data),
-  delete: (id: string) => api.delete(`/admin/projects/${id}`),
+  getAll: async (): Promise<TProject[]> => {
+    const res = await api.get("/projects");
+    return res.data;
+  },
+
+  // Création et MAJ acceptent Partial<TProject> ou FormData
+  create: (data: Partial<TProject> | FormData) =>
+    api.post(
+      "/projects/admin",
+      data,
+      data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+    ),
+
+  update: (id: string, data: Partial<TProject> | FormData) =>
+    api.put(
+      `/projects/admin/${id}`,
+      data,
+      data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+    ),
+
+  delete: (id: string) => api.delete(`/projects/admin/${id}`),
 };
 
-// Compétences
+//------------------------- Pour les compétences --------------------//
 export const skillAPI = {
-  getAll: () => api.get("/admin/skills"),
-  create: (data: any) => api.post("/admin/skills", data),
-  update: (id: string, data: any) => api.put(`/admin/skills/${id}`, data),
-  delete: (id: string) => api.delete(`/admin/skills/${id}`),
+  getAll: async (): Promise<TSkill[]> => {
+    const res = await api.get("/skills");
+    return res.data;
+  },
+  create: (data: FormData | Partial<TSkill>) =>
+    api.post(
+      "/skills/admin",
+      data,
+      data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+    ),
+  update: (id: string, data: FormData | Partial<TSkill>) =>
+    api.put(
+      `/skills/admin/${id}`,
+      data,
+      data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+    ),
+  delete: (id: string) => api.delete(`/skills/admin/${id}`),
 };
 
-// Profil
+
+//------------------------- Pour mon profil --------------------//
 export const profileAPI = {
-  get: () => api.get("/admin/profile"),
-  update: (data: any) => api.put("/admin/profile", data),
+  get: async (): Promise<TProfile> => {
+    const res = await api.get("/profile");
+    return res.data;
+  },
+  // Accept FormData for file uploads (avatar, cv)
+  // If data is FormData, set multipart headers; otherwise send JSON
+  update: (data: Partial<TProfile> | FormData) =>
+    api.put(
+      "/profile/admin",
+      data,
+      data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : undefined
+    ),
 };
 
-// Messages
-export const messageAPI = {
-  getAll: () => api.get("/admin/messages"),
-  delete: (id: string) => api.delete(`/admin/messages/${id}`),
-};
-
-// Auth
+//------------------------- Pour Authentification --------------------//
 export const authAPI = {
-  login: (credentials: { email: string; password: string }) =>
-    api.post('/admin/auth/login', credentials),
-  logout: () => api.post('/admin/auth/logout'),
-  verify: () => api.get('/admin/auth/verify'),
-  refreshToken: () => api.post('/admin/auth/refresh-token'), // ← ajouté
+  login: (credentials: { email: string; password: string }) => api.post("/admin/auth/login", credentials),
+  logout: () => api.post("/admin/auth/logout"),
+  verify: () => api.get("/admin/auth/verify"),
+  refreshToken: () => api.post("/admin/auth/refresh-token"),
 };
 
-
-// Upload
+//------------------------- Pour upload --------------------//
 export const uploadAPI = {
   uploadImage: (file: File, type: "project" | "skill" | "profile") => {
     const formData = new FormData();
     formData.append("image", file);
-    return api.post(`/admin/upload/${type}`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    return api.post(`/admin/upload/${type}`, formData, { headers: { "Content-Type": "multipart/form-data" } });
   },
 };
 

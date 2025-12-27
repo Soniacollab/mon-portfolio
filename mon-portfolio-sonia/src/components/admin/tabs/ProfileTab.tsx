@@ -1,107 +1,156 @@
-import { useEffect, useState, useRef } from "react";
-import FormRow from "../../molecules/ContactForm/FormRow";
-import { Button } from "../../atoms";
-import { TProfile, getProfile } from "../../../api/profile";
+import React, { useEffect, useReducer, useRef } from "react";
+import FormCard from "../../molecules/ContactForm/FormCard";
+import { TProfile } from "../../../types";
+import { profileAPI } from "../../../api/admin";
+import { useProfile } from "../../../hooks/useProfile";
+
+const API_URL = "http://localhost:5000";
+
+type State = {
+  profile: TProfile & { avatarFile?: File; cvFile?: File } | null;
+  message: { type: "success" | "error"; text: string } | null;
+  loading: boolean;
+};
+
+type Action =
+  | { type: "SET_PROFILE"; payload: TProfile }
+  | { type: "UPDATE_FIELD"; payload: { name: string; value: any } }
+  | { type: "SET_AVATAR"; payload: File }
+  | { type: "SET_CV"; payload: File }
+  | { type: "SET_MESSAGE"; payload: { type: "success" | "error"; text: string } | null }
+  | { type: "SET_LOADING"; payload: boolean };
+
+const initialState: State = {
+  profile: null,
+  message: null,
+  loading: false,
+};
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case "SET_PROFILE":
+      return { ...state, profile: action.payload };
+    case "UPDATE_FIELD":
+      if (!state.profile) return state;
+      return { ...state, profile: { ...state.profile, [action.payload.name]: action.payload.value } };
+    case "SET_AVATAR":
+      if (!state.profile) return state;
+      return { ...state, profile: { ...state.profile, avatarFile: action.payload } };
+    case "SET_CV":
+      if (!state.profile) return state;
+      return { ...state, profile: { ...state.profile, cvFile: action.payload } };
+    case "SET_MESSAGE":
+      return { ...state, message: action.payload };
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+    default:
+      return state;
+  }
+}
 
 export default function ProfileTab() {
-  const [profile, setProfile] = useState<TProfile & { avatarFile?: File } | null>(null);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [state, dispatch] = useReducer(reducer, initialState);
   const formRef = useRef<HTMLDivElement>(null);
 
-  // Récupère le profil au chargement
-  const fetchProfile = async () => {
-    const data = await getProfile();
-    setProfile(data);
-  };
+  // use shared profile hook as source of truth (avoids duplicate fetches)
+  const { profile: sharedProfile, cvDownloadUrl, downloadCV, refetchProfile } = useProfile();
 
-  useEffect(() => { fetchProfile(); }, []);
+  useEffect(() => {
+    if (sharedProfile) dispatch({ type: "SET_PROFILE", payload: sharedProfile });
+  }, [sharedProfile]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    if (!profile) return;
-    const { name, value } = e.target;
-    setProfile({ ...profile, [name]: value });
-  };
+  // Handle change pour input / textarea / select
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value, type, files } = e.target as HTMLInputElement; // files seulement pour input[type=file]
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!profile || !e.target.files || !e.target.files[0]) return;
-    const file = e.target.files[0];
-    setProfile({ ...profile, avatarFile: file });
+    if (type === "file" && files?.[0]) {
+      if (name === "avatar") dispatch({ type: "SET_AVATAR", payload: files[0] });
+      else if (name === "cv") dispatch({ type: "SET_CV", payload: files[0] });
+    } else {
+      dispatch({ type: "UPDATE_FIELD", payload: { name, value } });
+    }
   };
 
   const handleSubmit = async () => {
-    if (!profile) return;
+    if (!state.profile) return;
 
     const formData = new FormData();
-    formData.append("first_name", profile.first_name);
-    formData.append("last_name", profile.last_name);
-    formData.append("email", profile.email);
-    formData.append("bio", profile.bio || "");
-    if (profile.avatarFile) formData.append("avatar", profile.avatarFile);
+    formData.append("first_name", state.profile.first_name);
+    formData.append("last_name", state.profile.last_name);
+    formData.append("email", state.profile.email);
+    formData.append("bio", state.profile.bio || "");
+    if (state.profile.avatarFile) formData.append("avatar", state.profile.avatarFile);
+    if (state.profile.cvFile) formData.append("cv", state.profile.cvFile);
 
     try {
-      const res = await fetch("http://localhost:5000/api/admin/profile", {
-        method: "PUT",
-        body: formData,
-        credentials: "include", // envoie les cookies HttpOnly
-      });
-
-      if (!res.ok) throw new Error(`Erreur serveur : ${res.status}`);
-      setMessage({ type: "success", text: "Profil mis à jour !" });
-      fetchProfile();
+      await profileAPI.update(formData as any);
+      dispatch({ type: "SET_MESSAGE", payload: { type: "success", text: "Profil mis à jour !" } });
+      await refetchProfile();
     } catch (err: any) {
-      setMessage({ type: "error", text: err.message || "Une erreur est survenue." });
+      dispatch({ type: "SET_MESSAGE", payload: { type: "error", text: err.message || "Une erreur est survenue." } });
     }
-
-    // Supprimer le message après 4 secondes
-    setTimeout(() => setMessage(null), 4000);
   };
 
-  if (!profile) return null;
+  // Supprime le message après 4s
+  useEffect(() => {
+    if (!state.message) return;
+    const timer = setTimeout(() => dispatch({ type: "SET_MESSAGE", payload: null }), 4000);
+    return () => clearTimeout(timer);
+  }, [state.message]);
+
+  if (!state.profile) return null;
+
+  // Preview avatar
+  const avatarPreview = state.profile.avatarFile
+    ? URL.createObjectURL(state.profile.avatarFile)
+    : state.profile.avatar
+    ? `${API_URL}${state.profile.avatar}`
+    : null;
+
+  // Preview CV (optionnel)
+  const cvPreview = state.profile.cvFile
+    ? state.profile.cvFile.name
+    : state.profile.cv_url
+    ? `${API_URL}/api/profile/cv/${state.profile.cv_url.split("/").pop()}`
+    : null;
+
+  const handleDownload = async (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const url = cvPreview || cvDownloadUrl;
+    if (!url) return;
+    try {
+      await downloadCV(`${state.profile?.first_name || "profile"}_${state.profile?.last_name || "cv"}_CV.pdf`);
+    } catch (err) {
+      window.open(url, "_blank");
+    }
+  };
 
   return (
-    <div className="flex flex-col gap-4 p-4 border rounded bg-[rgba(0,0,0,0.3)]" ref={formRef}>
-      {/* Message */}
-      {message && (
-        <div
-          className={`p-2 rounded text-center font-medium ${
-            message.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
-          }`}
-        >
-          {message.text}
+    <div ref={formRef} className="flex flex-col gap-4">
+      {state.message && (
+        <div className={`p-2 rounded text-center font-medium ${
+          state.message.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
+        }`}>
+          {state.message.text}
         </div>
       )}
 
-      {/* Avatar preview + upload */}
-      <div className="flex items-center gap-4">
-        <div className="w-20 h-20 rounded-full overflow-hidden border border-white/20">
-          {profile.avatarFile ? (
-            <img
-              src={URL.createObjectURL(profile.avatarFile)}
-              alt="Avatar preview"
-              className="w-full h-full object-cover"
-            />
-          ) : profile.avatar ? (
-            <img
-              src={`http://localhost:5000${profile.avatar}`}
-              alt="Avatar"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/30">
-              Photo
-            </div>
-          )}
-        </div>
-        <input type="file" accept="image/*" onChange={handleAvatarChange} />
-      </div>
-
-      {/* Form fields */}
-      <FormRow label="Prénom" name="first_name" value={profile.first_name} onChange={handleChange} />
-      <FormRow label="Nom" name="last_name" value={profile.last_name} onChange={handleChange} />
-      <FormRow label="Email" name="email" value={profile.email} onChange={handleChange} />
-      <FormRow label="Bio" name="bio" value={profile.bio || ""} onChange={handleChange} isTextarea />
-
-      <Button onClick={handleSubmit} label="Sauvegarder" className="mt-2" />
+      <FormCard
+        title="Mon Profil"
+        fields={[
+          { label: "Prénom", name: "first_name", value: state.profile.first_name },
+          { label: "Nom", name: "last_name", value: state.profile.last_name },
+          { label: "Email", name: "email", value: state.profile.email },
+          { label: "Bio", name: "bio", value: state.profile.bio || "", isTextarea: true },
+        ]}
+        fileField={{ name: "avatar", label: "Avatar", preview: avatarPreview }}
+        fileFieldCV={{ name: "cv", label: "CV", preview: cvPreview, onDownload: handleDownload }} // décommenter si upload CV
+        onChange={handleChange}
+        onSubmit={handleSubmit}
+        submitLabel="Sauvegarder"
+      />
     </div>
   );
 }

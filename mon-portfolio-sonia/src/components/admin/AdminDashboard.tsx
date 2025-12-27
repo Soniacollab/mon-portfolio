@@ -2,7 +2,7 @@ import { useState } from "react";
 import ProjectsTab from "./tabs/ProjectsTab";
 import SkillsTab from "./tabs/SkillsTab";
 import ProfileTab from "./tabs/ProfileTab";
-import { authAPI } from "../../api/admin"; // <- utilise axios avec cookies
+import { authAPI } from "../../api/admin"; 
 import ExperienceTab from "./tabs/ExperienceTab";
 
 const AdminDashboard = () => {

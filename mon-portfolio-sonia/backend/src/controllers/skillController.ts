@@ -1,14 +1,18 @@
-// src/controllers/skillController.ts
-// CRUD compétences. Public GET, admin POST/PUT/DELETE.
+// ---------------------- Controller des compétences --------------------//
 import { Request, Response } from "express";
 import Skill from "../models/Skill";
 import Project from "../models/Project";
 import ProjectSkill from "../models/ProjectSkill";
-import mongoose from "mongoose";
 
-/** GET /api/skills */
+
+/************************************************************** 
+ *                GET /api/skills/
+ *              Recupèration de toutes les compétences 
+ **************************************************************/
 export const getSkills = async (req: Request, res: Response) => {
   try {
+
+    // Récupère toutes les compétences, triées par nom
     const skills = await Skill.find().sort({ name: 1 }).lean();
     res.json(skills);
   } catch (err) {
@@ -17,24 +21,34 @@ export const getSkills = async (req: Request, res: Response) => {
   }
 };
 
-/** POST /api/admin/skills */
+/************************************************************** 
+ *                  POST /api/admin/skills
+ *             Création d'une ou plusieurs compétences
+ **************************************************************/
 export const createSkill = async (req: Request, res: Response) => {
   try {
+
+    // D'abord on gère le cas de création multiple
     const skillsData = Array.isArray(req.body) ? req.body : [req.body];
+    
+    // On initialise un tableau pour stocker les compétences créées
     const createdSkills = [];
 
+    // On boucle sur les données pour créer chaque compétence
     for (const data of skillsData) {
       const { name, technique, profile_id } = data;
-      if (!name) return res.status(400).json({ message: "Le nom de la compétence est requis" });
 
-      const skill = new Skill({ 
-        name, 
-        technique: !!technique, 
+      // Crée une nouvelle instance de Skill
+      const skill = new Skill({
+        name,
+        technique: !!technique,
         profile_id,
-        icon: req.file ? `/uploads/skills/${req.file.filename}` : "/assets/default-skill.svg" // fallback si pas d'upload
+        icon: req.file ? `/uploads/skills/${req.file.filename}` : "/assets/default-skill.svg",
       });
 
+      // Sauvegarder dans la base de données
       await skill.save();
+      // Ajouter au tableau des compétences créées
       createdSkills.push(skill);
     }
 
@@ -45,20 +59,26 @@ export const createSkill = async (req: Request, res: Response) => {
   }
 };
 
-/** PUT /api/admin/skills/:id */
+
+/************************************************************** 
+ *                  PUT /api/admin/skills/:id
+ *                  Mise à jour d'une compétence 
+ **************************************************************/
 export const updateSkill = async (req: Request, res: Response) => {
   try {
-    const id = req.params.id;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID invalide" });
-
-    const skill = await Skill.findById(id);
+    // Trouve la compétence par ID cad la compétence à mettre à jour
+    const skill = await Skill.findById(req.params.id);
     if (!skill) return res.status(404).json({ message: "Compétence non trouvée" });
 
-    const { name, technique } = req.body;
-    if (typeof name !== "undefined") skill.name = name;
-    if (typeof technique !== "undefined") skill.technique = technique;
-    if (req.file) skill.icon = `/uploads/skills/${req.file.filename}`; // update si upload
+    // Récupèrer la compétence
+    const { name, technique, profile_id } = req.body;
 
+    if (name) skill.name = name;
+    if (typeof technique !== "undefined") skill.technique = technique;
+    if (profile_id) skill.profile_id = profile_id;
+    if (req.file) skill.icon = `/uploads/skills/${req.file.filename}`;
+
+    // Mettre à jour
     await skill.save();
     res.json(skill);
   } catch (err) {
@@ -68,21 +88,26 @@ export const updateSkill = async (req: Request, res: Response) => {
 };
 
 
-/** DELETE /api/admin/skills/:id */
+/************************************************************** 
+ *                DELETE /api/admin/skills/:id
+ *                   Suppression d'un skill 
+ **************************************************************/
 export const deleteSkill = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: "ID invalide" });
-    // remove references from projects
+
+    // Supprime les références dans les projets
     await Project.updateMany({}, { $pull: { skills: id } });
-    // remove pivot entries
+
+    // Supprime les entrées 
     await ProjectSkill.deleteMany({ skill_id: id });
+
     const skill = await Skill.findByIdAndDelete(id);
     if (!skill) return res.status(404).json({ message: "Compétence non trouvée" });
+
     res.json({ message: "Compétence supprimée" });
   } catch (err) {
     console.error("deleteSkill error:", err);
     res.status(500).json({ message: "Erreur suppression compétence" });
   }
-  
 };

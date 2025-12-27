@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { ProjectCard } from "../../molecules";
 import { fadeIn } from "../../../utils/motion";
 import { useProjects } from "../../../hooks/useProjects";
+import { TProject, TSkill } from "../../../types";
+import { skillColors } from "../../../constants/skill";
 
 const API_BASE = "http://localhost:5000";
 
@@ -14,13 +16,13 @@ const Works = () => {
   if (loading) return <p className="text-white text-center">Chargement des projets...</p>;
   if (error) return <p className="text-red-500 text-center">{error}</p>;
 
-  // Transforme chaque image en URL complète si besoin
-  const projectsWithFullImage = projects.map((p) => ({
+  // Assure que chaque image est une string non undefined
+  const projectsWithFullImage: TProject[] = projects.map((p) => ({
     ...p,
     image: p.image
-      ? p.image.startsWith("http") // si déjà URL complète
+      ? p.image.startsWith("http")
         ? p.image
-        : `${API_BASE}${p.image}` // sinon ajoute API_BASE
+        : `${API_BASE}${p.image}`
       : "/placeholder.jpg",
   }));
 
@@ -56,29 +58,28 @@ const Works = () => {
       </motion.div>
 
       <div className="flex flex-wrap justify-center gap-8">
-        {projectsWithFullImage.map((project, index) => (
-          <ProjectCard
-            key={project._id}
-            index={index}
-            name={project.title}
-            description={project.description}
-            image={project.image}
-            sourceCodeLink={project.link ?? "#"}
-            tags={
-              project.skills?.map((skill) => ({
-                name: skill.name,
-                color:
-                  skill.name === "React"
-                    ? "text-[#61dafb]"
-                    : skill.name === "Node.js"
-                    ? "text-[#3C873A]"
-                    : skill.name === "TypeScript"
-                    ? "text-[#3178C6]"
-                    : "text-white/80",
-              })) || []
-            }
-          />
-        ))}
+        {projectsWithFullImage.map((project, index) => {
+          // Gestion sécurisée des skills
+          const tags = (project.skills || []).map((skill) => {
+            const skillObj: TSkill = typeof skill === "string" ? { _id: skill, name: skill, technique: false } : skill;
+            return {
+              name: skillObj.name,
+              color: skillColors[skillObj.name] ?? "text-white/80",
+            };
+          });
+
+          return (
+            <ProjectCard
+              key={project._id}
+              index={index}
+              name={project.title}
+              description={project.description ?? ""}
+              image={project.image ?? "/placeholder.jpg"}
+              sourceCodeLink={project.link ?? "#"}
+              tags={tags}
+            />
+          );
+        })}
       </div>
     </section>
   );

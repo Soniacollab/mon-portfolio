@@ -1,16 +1,53 @@
-// src/routes/skillRoutes.ts
+//--------------------- Routes compétences ---------------------//
 import express from "express";
-import { getSkills, createSkill, updateSkill, deleteSkill } from "../controllers/skillController";
-import { adminAuth  } from "../middleware/authMiddleware";
+import {
+  getSkills,
+  createSkill,
+  updateSkill,
+  deleteSkill,
+} from "../controllers/skillController";
+import { adminAuth } from "../middleware/authMiddleware";
 import { uploadFile } from "../middleware/upload";
+import {
+  validateCreateSkill,
+  validateUpdateSkill,
+} from "../middleware/validateSkill";
+import { validateObjectId } from "../middleware/validateObjectId";
+
 const router = express.Router();
 
-// public
-router.get("/", getSkills);
 
-// admin
-router.post("/", adminAuth, uploadFile.single("icon"), createSkill);
-router.put("/:id", adminAuth, uploadFile.single("icon"), updateSkill);
-router.delete("/:id", adminAuth, deleteSkill);
+// -- GET /api/skills -- // (public)
+router.get(
+    "/", 
+    getSkills
+);
+
+// -- POST /api/skills/admin -- // (pour admin only)
+router.post(
+  "/admin/",
+  adminAuth,
+  uploadFile.single("icon"),
+  validateCreateSkill,
+  createSkill
+);
+
+// -- PUT /api/skills/admin/:id -- // (pour admin only)
+router.put(
+  "/admin/:id",
+  adminAuth,
+  validateObjectId("id"),
+  uploadFile.single("icon"),
+  validateUpdateSkill,
+  updateSkill
+);
+
+// -- DELETE /api/skills/admin/:id -- // (pour admin only)
+router.delete(
+    "/admin/:id", 
+    adminAuth, 
+    validateObjectId("id"), 
+    deleteSkill
+);
 
 export default router;

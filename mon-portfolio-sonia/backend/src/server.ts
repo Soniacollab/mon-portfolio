@@ -9,8 +9,8 @@ import profileRoutes from "./routes/profileRoutes";
 import projectRoutes from "./routes/projectRoutes";
 import skillRoutes from "./routes/skillRoutes";
 import projectSkillRoutes from "./routes/projectSkillRoutes";
-import messageRoutes from "./routes/messageRoutes";
 import experienceRoutes from "./routes/experienceRoutes";
+import contactRoutes from "./routes/contactRoutes";
 
 import path from "path";
 
@@ -32,11 +32,12 @@ connectDB();
 
 // Routes
 app.use("/api/admin/auth", adminAuthRoutes);
-app.use("/api/admin/profile", profileRoutes);
-app.use("/api/admin/projects", projectRoutes);
-app.use("/api/admin/skills", skillRoutes);
-app.use("/api/admin/project-skills", projectSkillRoutes);
-app.use("/api/admin/experiences", experienceRoutes);
+app.use("/api/profile", profileRoutes);
+app.use("/api/projects", projectRoutes);
+app.use("/api/skills", skillRoutes);
+app.use("/api/project-skills", projectSkillRoutes);
+app.use("/api/experiences", experienceRoutes);
+app.use("/api/contact", contactRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));

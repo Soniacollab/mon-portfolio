@@ -20,14 +20,14 @@ const ExperienceSchema = new Schema<IExperience>(
   {
     title: { type: String, required: true, unique: true },
     company: { type: String, required: true },
-    description: { type: String, required: true },
+    description: { type: String },
     type: { 
       type: String, 
       enum: ['stage', 'job', 'internship', 'freelance'], 
       required: true 
     },
     startDate: { type: Date, required: true },
-    endDate: { type: Date, required: true },
+    endDate: { type: Date },
     location: { type: String },
     technologies: [{ type: Schema.Types.ObjectId, ref: "Skill" }],
     achievements: [{ type: String }],

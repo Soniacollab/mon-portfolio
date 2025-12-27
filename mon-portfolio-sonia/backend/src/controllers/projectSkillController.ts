@@ -1,7 +1,4 @@
-// src/controllers/projectSkillController.ts
-// Controller léger pour gérer explicitement la table pivot si tu veux endpoints séparés:
-// - POST /api/admin/project-skills  { project_id, skill_id }  (ajoute liason)
-// - DELETE /api/admin/project-skills  (supprime liason)
+//---------------- Controller pour la liaison project-skill -------------//
 import { Request, Response } from "express";
 import ProjectSkill from "../models/ProjectSkill";
 import Project from "../models/Project";

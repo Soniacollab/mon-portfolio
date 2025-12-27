@@ -2,7 +2,7 @@
 import React from "react";
 import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
-import { github } from "../../../assets";
+import  github  from "../../../../public/assets/github.png";
 import { Typography, Icon, Badge, Button, Image } from "../../atoms";
 import * as S from "./projectCard.styles";
 import { skillColors } from "../../../constants/skill";

@@ -1,22 +1,28 @@
-// src/hooks/useSkills.ts
-import { useEffect, useState } from "react";
-import { getSkills, TSkill } from "../api/skills";
+import { useState, useEffect } from "react";
+import { skillAPI } from "../api/admin";
+import { TSkill } from "../types";
 
 export const useSkills = () => {
   const [skills, setSkills] = useState<TSkill[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchSkills = async () => {
+    setLoading(true);
+    try {
+      const data = await skillAPI.getAll();
+      setSkills(data);
+    } catch (err) {
+      console.error("Erreur fetch skills:", err);
+      setError("Impossible de récupérer les compétences");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        const data = await getSkills();
-        setSkills(Array.isArray(data) ? data : []);
-      } catch (err: any) {
-        setError("Impossible de récupérer les compétences");
-      } 
-    };
     fetchSkills();
   }, []);
 
-  return { skills, error };
+  return { skills, loading, error, fetchSkills };
 };

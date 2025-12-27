@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import NavLinksDesktop from "../molecules/NavLink/NavLinksDesktop";
 import NavLinksMobile from "../molecules/NavLink/NavLinksMobile";
-import logo from "../../assets/logo.svg";
+import logo from "../../../public/assets/logo.svg";
 import { Image } from "../atoms";
 
 
