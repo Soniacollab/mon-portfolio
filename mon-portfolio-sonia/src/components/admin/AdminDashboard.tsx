@@ -6,18 +6,22 @@ import { authAPI } from "../../api/admin";
 import ExperienceTab from "./tabs/ExperienceTab";
 
 const AdminDashboard = () => {
+  // Gestion des onglets par défaut sur "projects"
   const [activeTab, setActiveTab] = useState("projects");
 
+  // Fonction de logout
   const handleLogout = async () => {
     try {
-      await authAPI.logout(); // utilise axios
+      await authAPI.logout(); 
     } catch (err) {
       console.error("Erreur logout", err);
     } finally {
-      window.location.href = "/admin/secure-login"; // redirect
+      window.location.href = "/admin/secure-login"; // On redirige vers la page de login
     }
   };
 
+
+  // ------------------- Affichage -------------------
   return (
     <div className="p-6">
       <div className="flex items-center mb-4">
@@ -38,6 +42,7 @@ const AdminDashboard = () => {
             onClick={() => setActiveTab(tab)}
             className={`px-4 py-2 rounded ${activeTab === tab ? "bg-blue-600" : "bg-gray-700"} text-white`}
           >
+            
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}

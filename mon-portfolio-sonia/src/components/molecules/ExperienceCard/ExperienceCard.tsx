@@ -1,6 +1,7 @@
 import React from "react";
 import { VerticalTimelineElement } from "react-vertical-timeline-component";
 import { Typography, Icon, Button } from "../../atoms";
+import { config } from "../../../constants/config";
 import List from "../../atoms/List";
 
 interface ExperienceCardProps {
@@ -63,10 +64,10 @@ const ExperienceCard: React.FC<ExperienceCardProps> = ({
               {title}
             </Typography>
 
-            <Typography variant="p" className="text-secondary mt-1">
-              {companyName} • {formatDate(startDate)}
-              {endDate ? ` - ${formatDate(endDate)}` : ""}
-            </Typography>
+                <Typography variant="p" className="text-secondary mt-1">
+                  {companyName} • {formatDate(startDate)}
+                  {endDate ? ` - ${formatDate(endDate)}` : ` - ${config.sections.experience.inProgressLabel}`}
+                </Typography>
 
             <List items={points} className="mt-4" />
 

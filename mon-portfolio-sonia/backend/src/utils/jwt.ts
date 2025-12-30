@@ -10,7 +10,7 @@ export const signToken = (payload: object, expiresIn = "24h"): string => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn });
 };
 
-export const verifyToken = (token: string): any => {
+export const verifyToken = (token: string): unknown => {
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (err) {

@@ -1,18 +1,18 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 import { navLinks } from "../../../constants/config";
 import MenuToggle from "../../atoms/MenuToggle";
-import menu from "../../../../public/assets/menu.svg";
-import close from "../../../../public/assets/close.svg";
+const menu = "/assets/menu.svg";
+const close = "/assets/close.svg";
 
 
 interface NavLinksMobileProps {
   active: string;
-  setActive: (title: string) => void;
   toggle: boolean;
   setToggle: (toggle: boolean) => void;
 }
 
-const NavLinksMobile: React.FC<NavLinksMobileProps> = ({ active, setActive, toggle, setToggle }) => {
+const NavLinksMobile: React.FC<NavLinksMobileProps> = ({ active, toggle, setToggle }) => {
   return (
     <div className="flex items-center gap-4 sm:hidden">
       {/* Bouton Menu */}
@@ -26,15 +26,19 @@ const NavLinksMobile: React.FC<NavLinksMobileProps> = ({ active, setActive, togg
       >
         <ul className="flex flex-col gap-4 p-6">
           {navLinks.map((nav) => (
-            <li key={nav.id} onClick={() => { setToggle(false); setActive(nav.title); }}>
-              <a
-                href={`#${nav.id}`}
-                className={`relative block text-[1.1rem] font-medium transition-all duration-200 hover:pl-2 ${
-                  active === nav.title ? "text-[#915eff]" : "text-[#aaa6c3]"
-                } hover:text-[#915eff] before:absolute before:left-0 before:opacity-0 before:transition-all before:duration-200 before:content-['→'] hover:before:opacity-100`}
-              >
-                {nav.title}
-              </a>
+            <li key={nav.id} onClick={() => { setToggle(false); }}>
+                <NavLink
+                  to={`/#${nav.id}`}
+                  onClick={(e) => { /* blur after click for mouse users */ (e.currentTarget as HTMLElement).blur(); }}
+                  className={() => {
+                    const activeNow = active === nav.title;
+                    return `relative block text-[1.1rem] font-medium transition-all duration-200 hover:pl-2 ${
+                      activeNow ? "text-[#915eff]" : "text-[#aaa6c3]"
+                    } hover:text-[#915eff] before:absolute before:left-0 before:opacity-0 before:transition-all before:duration-200 before:content-['→'] hover:before:opacity-100`;
+                  }}
+                >
+                  {nav.title}
+                </NavLink>
             </li>
           ))}
         </ul>

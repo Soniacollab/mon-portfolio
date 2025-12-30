@@ -1,23 +1,15 @@
-import { BrowserRouter, Routes } from "react-router-dom";
-import { useState, useEffect } from "react";
-import AdminRoutes from "./routes/adminRoutes";
-import PublicRoutes from "./routes/publicRoutes";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import PublicPage from "./pages/PublicPage";
+import AdminPage from "./pages/AdminPage";
+import ProjectDetail from "./pages/ProjectDetail";
 
 export default function App() {
-  const [, setIsAuthenticated] = useState<boolean>(false);
-
-  useEffect(() => {
-    fetch(import.meta.env.VITE_API_BASE + "/admin/me", { credentials: "include" })
-      .then((r) => r.ok ? r.json() : Promise.reject(r))
-      .then(() => setIsAuthenticated(true))
-      .catch(() => setIsAuthenticated(false));
-  }, []);
-
   return (
     <BrowserRouter>
       <Routes>
-        {AdminRoutes({ onLogin: setIsAuthenticated })}
-        {PublicRoutes()}
+        <Route path="/admin/*" element={<AdminPage />} />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
+        <Route path="/*" element={<PublicPage />} />
       </Routes>
     </BrowserRouter>
   );

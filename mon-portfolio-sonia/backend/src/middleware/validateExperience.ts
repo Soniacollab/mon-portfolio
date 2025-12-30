@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as yup from "yup";
+import { ValidationError } from "yup";
 
 // ------------------ Schéma Yup pour expérience ------------------ //
 const experienceSchema = yup.object().shape({
@@ -78,15 +79,28 @@ const validateExperience = (isUpdate = false) => async (
       }
     }
 
+    // ---------- Normaliser les dates vides (client envoie "" pour champ vide)
+    // Si endDate est une chaîne vide, le considérer comme absent (en cours)
+    if (typeof req.body.endDate === "string" && req.body.endDate.trim() === "") {
+      delete req.body.endDate;
+    }
+    // De même pour startDate si jamais envoyé vide (la validation `required` gèrera le cas)
+    if (typeof req.body.startDate === "string" && req.body.startDate.trim() === "") {
+      delete req.body.startDate;
+    }
+
     await schema.validate(req.body, { abortEarly: false });
 
     next();
-  } catch (err: any) {
-    const errors = err.inner?.reduce((acc: any, e: any) => {
-      if (e.path) acc[e.path] = e.message;
-      return acc;
-    }, {});
-    return res.status(400).json({ errors });
+  } catch (err: unknown) {
+    if (err instanceof ValidationError) {
+      const errors = err.inner?.reduce((acc: Record<string, string>, e: ValidationError) => {
+        if (e.path) acc[e.path] = e.message;
+        return acc;
+      }, {} as Record<string, string>);
+      return res.status(400).json({ errors });
+    }
+    return res.status(400).json({ errors: {} });
   }
 };
 

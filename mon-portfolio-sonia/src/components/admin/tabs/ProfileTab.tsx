@@ -1,178 +1,235 @@
-import React, { useEffect, useReducer, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import FormCard from "../../molecules/ContactForm/FormCard";
-import { TProfile } from "../../../types";
 import { profileAPI } from "../../../api/admin";
 import { useProfile } from "../../../hooks/useProfile";
-
-const API_URL = "http://localhost:5000";
-
-type State = {
-  profile: TProfile & { avatarFile?: File; cvFile?: File } | null;
-  message: { type: "success" | "error"; text: string } | null;
-  loading: boolean;
-};
-
-type Action =
-  | { type: "SET_PROFILE"; payload: TProfile }
-  | { type: "UPDATE_FIELD"; payload: { name: string; value: any } }
-  | { type: "SET_AVATAR"; payload: File }
-  | { type: "SET_CV"; payload: File }
-  | { type: "SET_MESSAGE"; payload: { type: "success" | "error"; text: string } | null }
-  | { type: "SET_LOADING"; payload: boolean };
-
-const initialState: State = {
-  profile: null,
-  message: null,
-  loading: false,
-};
-
-function reducer(state: State, action: Action): State {
-  switch (action.type) {
-    case "SET_PROFILE":
-      return { ...state, profile: action.payload };
-    case "UPDATE_FIELD":
-      if (!state.profile) return state;
-      return { ...state, profile: { ...state.profile, [action.payload.name]: action.payload.value } };
-    case "SET_AVATAR":
-      if (!state.profile) return state;
-      return { ...state, profile: { ...state.profile, avatarFile: action.payload } };
-    case "SET_CV":
-      if (!state.profile) return state;
-      return { ...state, profile: { ...state.profile, cvFile: action.payload } };
-    case "SET_MESSAGE":
-      return { ...state, message: action.payload };
-    case "SET_LOADING":
-      return { ...state, loading: action.payload };
-    default:
-      return state;
-  }
-}
+import { Toast } from "../../atoms";
+import { API_BASE } from "../../../constants/api";
+import { useFormManager } from "../../../hooks/useFormManager";
+import { TProfileForm } from "../../../types/form";
 
 export default function ProfileTab() {
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const formRef = useRef<HTMLDivElement>(null);
 
-  // use shared profile hook as source of truth (avoids duplicate fetches)
-  const { profile: sharedProfile, cvDownloadUrl, downloadCV, refetchProfile } = useProfile();
+  // Utilisation d'un ref pour le timeout du toast
+  const toastTimeoutRef = useRef<number | null>(null);
 
+  // Récupération du profil via le hook useProfile
+  const { profile: sharedProfile, refetchProfile } = useProfile();
+
+  // On adapte pour transformer l'objet formdata au format API attendu
+  type FormApi = {
+    create: (data: FormData) => Promise<unknown>;
+    update: (id: string, data: FormData) => Promise<unknown>;
+    delete: (id: string) => Promise<unknown>;
+  };
+
+  const profileAdapter: FormApi = {
+    create: async (data: FormData) => profileAPI.update(data),
+    update: async (_id: string, data: FormData) => profileAPI.update(data),
+    delete: async (_id: string) => Promise.reject(new Error("Not supported")),
+  };
+
+  // Form par défaut
+  const defaultForm: TProfileForm = {
+    first_name: "",
+    last_name: "",
+    email: "",
+    bio: "",
+    avatar: undefined,
+    cv: undefined,
+  };
+
+  // Hook useFormManager pour gérer le formulaire
+  const {
+    form,
+    setForm,
+    handleChange,
+    handleSubmit: fmSubmit,
+    errors,
+  } = useFormManager<TProfileForm>({
+    // On passe le form
+    defaultForm,
+    // On utilise l'adaptateur pour le profileAPI
+    api: profileAdapter,
+    // On refetch le profil après mise à jour
+    fetchList: refetchProfile,
+  });
+
+  // On remplit le form avec les données du profil partagé
   useEffect(() => {
-    if (sharedProfile) dispatch({ type: "SET_PROFILE", payload: sharedProfile });
+    if (!sharedProfile) return;
+    setForm({
+      first_name: sharedProfile.first_name || "",
+      last_name: sharedProfile.last_name || "",
+      email: sharedProfile.email || "",
+      bio: sharedProfile.bio || "",
+    });
+    // Intentionally omit `setForm` from deps because its identity is not stable
+    // and would cause this effect to re-run endlessly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sharedProfile]);
 
-  // Handle change pour input / textarea / select
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type, files } = e.target as HTMLInputElement; // files seulement pour input[type=file]
+  // Toast
+  const [toastMessage, setToastMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
 
-    if (type === "file" && files?.[0]) {
-      if (name === "avatar") dispatch({ type: "SET_AVATAR", payload: files[0] });
-      else if (name === "cv") dispatch({ type: "SET_CV", payload: files[0] });
-    } else {
-      dispatch({ type: "UPDATE_FIELD", payload: { name, value } });
-    }
-  };
 
+
+  // Gestion de la soumission du formulaire
   const handleSubmit = async () => {
-    if (!state.profile) return;
+    const apiErrors = await fmSubmit();
+    if (!apiErrors) {
+      setToastMessage({ type: "success", text: "Profil mis à jour !" });
 
-    const formData = new FormData();
-    formData.append("first_name", state.profile.first_name);
-    formData.append("last_name", state.profile.last_name);
-    formData.append("email", state.profile.email);
-    formData.append("bio", state.profile.bio || "");
-    if (state.profile.avatarFile) formData.append("avatar", state.profile.avatarFile);
-    if (state.profile.cvFile) formData.append("cv", state.profile.cvFile);
-
-    try {
-      await profileAPI.update(formData as any);
-      dispatch({ type: "SET_MESSAGE", payload: { type: "success", text: "Profil mis à jour !" } });
-      await refetchProfile();
-    } catch (err: any) {
-      dispatch({ type: "SET_MESSAGE", payload: { type: "error", text: err.message || "Une erreur est survenue." } });
+      // On supprime le toast après 3 secondes (on garde l'id pour cleanup)
+      toastTimeoutRef.current = window.setTimeout(
+        () => setToastMessage(null),
+        3000
+      );
+    } else {
+      setToastMessage({ type: "error", text: "Erreur lors de la mise à jour" });
     }
   };
 
-  // Supprime le message après 4s
+  // Local wrapper for change to validate files (avatar/cv) before delegating
+  const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const target = e.target as HTMLInputElement;
+
+    // If file input, run simple client-side validation
+    if (target.type === "file" && target.files && target.files[0]) {
+      const file = target.files[0];
+      const isImageField = target.name === "avatar";
+      if (isImageField) {
+        const allowed = ["image/jpeg", "image/png", "image/webp", "image/svg+xml"];
+        if (!allowed.includes(file.type)) {
+          if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+          setToastMessage({ type: "error", text: "Format d'image non supporté (jpg/png/webp/svg)" });
+          // clear toast after a while
+          toastTimeoutRef.current = window.setTimeout(() => setToastMessage(null), 3000);
+          return;
+        }
+        const maxSize = 2 * 1024 * 1024; // 2MB
+        if (file.size > maxSize) {
+          if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+          setToastMessage({ type: "error", text: "Image trop volumineuse (max 2MB)" });
+          toastTimeoutRef.current = window.setTimeout(() => setToastMessage(null), 3000);
+          return;
+        }
+      }
+      // CV validation
+      if (target.name === "cv") {
+        if (file.type !== "application/pdf") {
+          if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+          setToastMessage({ type: "error", text: "Le CV doit être au format PDF" });
+          toastTimeoutRef.current = window.setTimeout(() => setToastMessage(null), 3000);
+          return;
+        }
+        const maxCv = 5 * 1024 * 1024; // 5MB
+        if (file.size > maxCv) {
+          if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+          setToastMessage({ type: "error", text: "CV trop volumineux (max 5MB)" });
+          toastTimeoutRef.current = window.setTimeout(() => setToastMessage(null), 3000);
+          return;
+        }
+      }
+    }
+
+    // Delegate to form manager
+    handleChange(e);
+  };
+
+  // Cleanup du timeout si le composant est démonté avant la fin
   useEffect(() => {
-    if (!state.message) return;
-    const timer = setTimeout(() => dispatch({ type: "SET_MESSAGE", payload: null }), 4000);
-    return () => clearTimeout(timer);
-  }, [state.message]);
+    return () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    };
+  }, []);
 
-  if (!state.profile) return null;
 
-  // Preview avatar
-  const avatarPreview = state.profile.avatarFile
-    ? URL.createObjectURL(state.profile.avatarFile)
-    : state.profile.avatar
-    ? `${API_URL}${state.profile.avatar}`
+  if (!form) return null;
+
+  const avatarSrc = sharedProfile?.avatar
+    ? sharedProfile.avatar.startsWith("http")
+      ? sharedProfile.avatar
+      : `${API_BASE}${sharedProfile.avatar}`
     : null;
 
-  // Preview CV (optionnel)
-  const cvPreview = state.profile.cvFile
-    ? state.profile.cvFile.name
-    : state.profile.cv_url
-    ? `${API_URL}/api/profile/cv/${state.profile.cv_url.split("/").pop()}`
-    : null;
-
-  const handleDownload = async (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    const url = cvPreview || cvDownloadUrl;
-    if (!url) return;
-    try {
-      await downloadCV(`${state.profile?.first_name || "profile"}_${state.profile?.last_name || "cv"}_CV.pdf`);
-    } catch (err) {
-      window.open(url, "_blank");
-    }
-  };
+  const isFile = (v: unknown): v is File => typeof v === "object" && v instanceof File;
 
   return (
-    <div ref={formRef} className="flex flex-col gap-4">
-      {state.message && (
-        <div className={`p-2 rounded text-center font-medium ${
-          state.message.type === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
-        }`}>
-          {state.message.text}
+    <div className="flex flex-col gap-4">
+
+      <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
+
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        <div className="w-full md:w-40">
+          <div className="text-sm text-white mb-2">Photo de profil</div>
+          {avatarSrc ? (
+            <img src={avatarSrc} alt="avatar" className="w-28 h-28 rounded-full object-cover" />
+          ) : (
+            <div className="w-28 h-28 rounded-full bg-[rgba(255,255,255,0.04)] flex items-center justify-center text-sm text-gray-400">
+              Aucune photo
+            </div>
+          )}
         </div>
-      )}
 
-      <FormCard
-        title="Mon Profil"
-        fields={[
-          { label: "Prénom", name: "first_name", value: state.profile.first_name },
-          { label: "Nom", name: "last_name", value: state.profile.last_name },
-          { label: "Email", name: "email", value: state.profile.email },
-          { label: "Bio", name: "bio", value: state.profile.bio || "", isTextarea: true },
-        ]}
-        fileField={{ name: "avatar", label: "Avatar", preview: avatarPreview }}
-        onChange={handleChange}
-        onSubmit={handleSubmit}
-        submitLabel="Sauvegarder"
-      />
-
-      {/* CV upload + download (admin only) */}
-      <div className="flex flex-col">
-        <label htmlFor={`cv-file`} className="mb-2 font-medium text-white">CV</label>
-        <input
-          id={`cv-file`}
-          type="file"
-          name="cv"
-          onChange={handleChange}
-          title={`Upload CV`}
-          aria-label={`Upload CV`}
-          className="bg-[rgba(0,0,0,0.5)] border border-[rgba(145,94,255,0.25)] rounded-lg px-4 py-2 text-white outline-none focus:border-[#915EFF] focus:ring-1 focus:ring-[#915EFF] transition"
-        />
-        {cvPreview && (
-          <a
-            href={cvPreview}
-            onClick={handleDownload}
-            download
-            className="mt-2 text-sm text-sky-400 underline"
-          >
-            Télécharger le CV
-          </a>
-        )}
+        <div className="flex-1">
+          <FormCard
+            title="Mon Profil"
+            fields={[
+              {
+                label: "Prénom",
+                name: "first_name",
+                value: form.first_name,
+                error: errors.first_name,
+              },
+              {
+                label: "Nom",
+                name: "last_name",
+                value: form.last_name,
+                error: errors.last_name,
+              },
+              {
+                label: "Email",
+                name: "email",
+                value: form.email,
+                error: errors.email,
+              },
+              {
+                label: "Bio",
+                name: "bio",
+                value: form.bio || "",
+                isTextarea: true,
+                error: errors.bio,
+              },
+            ]}
+            onChange={handleLocalChange}
+            onSubmit={handleSubmit}
+            submitLabel="Sauvegarder"
+            fileFields={[
+              {
+                name: "avatar",
+                label: "Avatar",
+                preview: isFile(form.avatar) ? undefined : (sharedProfile?.avatar ?? null),
+                accept: "image/png,image/jpeg,image/webp,image/svg+xml",
+                value: form.avatar,
+                showRemove: true,
+              },
+              {
+                name: "cv",
+                label: "Uploader CV (PDF)",
+                preview: null,
+                accept: "application/pdf",
+                value: form.cv,
+                showRemove: false,
+                showPreview: false,
+              },
+            ]}
+          />
+        </div>
       </div>
     </div>
   );

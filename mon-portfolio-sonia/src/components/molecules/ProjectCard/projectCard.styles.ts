@@ -1,5 +1,5 @@
 export const cardStyle =
-  "w-full sm:w-[320px] h-[480px] rounded-2xl p-5 bg-[rgba(17,17,24,0.88)] backdrop-blur-[8px] [-webkit-backdrop-filter:blur(8px)] border border-[rgba(145,94,255,0.25)] shadow-[0_0_22px_rgba(145,94,255,0.12)] flex flex-col";
+  "w-full max-w-[340px] h-[480px] rounded-2xl p-5 bg-[rgba(17,17,24,0.88)] backdrop-blur-[8px] [-webkit-backdrop-filter:blur(8px)] border border-[rgba(145,94,255,0.25)] shadow-[0_0_22px_rgba(145,94,255,0.12)] flex flex-col";
 
 export const imageContainerStyle = "relative h-[200px] w-full rounded-xl overflow-hidden";
 

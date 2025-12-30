@@ -1,3 +1,4 @@
+// ------------------ Hook pour gérer les compétences ------------------ //
 import { useState, useEffect } from "react";
 import { skillAPI } from "../api/admin";
 import { TSkill } from "../types";

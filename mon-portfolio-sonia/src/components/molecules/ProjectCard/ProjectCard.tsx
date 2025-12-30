@@ -1,8 +1,9 @@
 // src/components/molecules/ProjectCard/ProjectCard.tsx
-import React from "react";
+import { FC } from "react";
+import { Link } from "react-router-dom";
 import Tilt from "react-parallax-tilt";
 import { motion } from "framer-motion";
-import  github  from "../../../../public/assets/github.png";
+const github = "/assets/github.png";
 import { Typography, Icon, Badge, Button, Image } from "../../atoms";
 import * as S from "./projectCard.styles";
 import { skillColors } from "../../../constants/skill";
@@ -15,20 +16,22 @@ export interface ProjectCardProps {
   image?: string;
   sourceCodeLink?: string;
   tags?: { name: string; color?: string }[];
+  detailLink?: string;
 
-  // Props admin facultatives
+  // Props admin 
   _id?: string;
   onEdit?: () => void;
   onDelete?: () => void;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({
+const ProjectCard: FC<ProjectCardProps> = ({
   index,
   name,
   description,
   image,
   sourceCodeLink,
   tags = [],
+  detailLink,
   onEdit,
   onDelete,
 }) => (
@@ -59,7 +62,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         )}
 
-        {/* Title & Description */}
+        {/* Titre & Description */}
         <div className="mt-4">
           <Typography variant="h3" className={S.titleStyle}>
             {name}
@@ -82,7 +85,8 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           </div>
         )}
 
-        {/* Admin buttons */}
+      
+        
         {(onEdit || onDelete) && (
           <div className="mt-4 flex gap-2">
             {onEdit && (
@@ -99,6 +103,15 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 className="bg-red-600 hover:bg-red-700"
               />
             )}
+          </div>
+        )}
+
+        
+        {detailLink && (
+          <div className="mt-4 flex justify-center">
+            <Link to={detailLink}>
+              <Button label={"Voir plus"} />
+            </Link>
           </div>
         )}
       </div>

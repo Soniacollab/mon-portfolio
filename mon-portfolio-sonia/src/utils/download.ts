@@ -1,5 +1,9 @@
+import { fetchWithRefreshOrRedirect } from "./fetchWithRefresh";
+
 export async function downloadFile(url: string, filename?: string) {
-  const res = await fetch(url, { credentials: "include" });
+  // Utilise la variante qui redirige si le refresh échoue
+  const res = await fetchWithRefreshOrRedirect(url, { method: "GET" });
+  if (!res) throw new Error("Session expirée, redirection vers la page de connexion");
   if (!res.ok) throw new Error(`Téléchargement échoué (${res.status})`);
   const blob = await res.blob();
   const objectUrl = URL.createObjectURL(blob);

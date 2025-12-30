@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as yup from "yup";
+import { ValidationError } from "yup";
 
 // ------------------ Schéma Yup pour profil ------------------ //
 const profileSchema = yup.object({
@@ -44,12 +45,14 @@ export const validateProfile = async (req: Request, res: Response, next: NextFun
   try {
     await profileSchema.validate(req.body, { abortEarly: false });
     next();
-  } catch (err: any) {
-    // Construction d'un objet lisible pour le front
-    const errors = err.inner?.reduce((acc: any, e: any) => {
-      if (e.path) acc[e.path] = e.message;
-      return acc;
-    }, {});
-    return res.status(400).json({ errors });
+  } catch (err: unknown) {
+    if (err instanceof ValidationError) {
+      const errors = err.inner?.reduce((acc: Record<string, string>, e: ValidationError) => {
+        if (e.path) acc[e.path] = e.message;
+        return acc;
+      }, {} as Record<string, string>);
+      return res.status(400).json({ errors });
+    }
+    return res.status(400).json({ errors: {} });
   }
 };

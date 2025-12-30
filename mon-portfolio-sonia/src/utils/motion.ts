@@ -1,3 +1,4 @@
+//------------ Fonction utilitaire pour les animations avec framer-motion ------------//
 import type { TMotion } from "../types";
 import { Variants } from "framer-motion";
 

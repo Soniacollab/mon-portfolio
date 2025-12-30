@@ -26,9 +26,26 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
+// Servir les uploads sans cache en développement pour éviter des réponses 304 obsolètes
+app.use(
+  "/uploads",
+  express.static(path.join(__dirname, "../uploads"), {
+    maxAge: 0,
+    setHeaders: (res) => {
+      res.setHeader("Cache-Control", "no-store, must-revalidate");
+    },
+  })
+);
 
 connectDB();
+
+// During development, ensure API responses are not cached by browsers
+app.use("/api", (req, res, next) => {
+  res.setHeader("Cache-Control", "no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+  next();
+});
 
 // Routes
 app.use("/api/admin/auth", adminAuthRoutes);

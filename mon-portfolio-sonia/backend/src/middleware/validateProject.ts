@@ -47,7 +47,7 @@ const projectSchema = yup.object().shape({
 
 // ------------------ Helper parse skills ------------------//
 // Transforme les skills reçus en tableau, supporte JSON string
-const parseSkills = (skills: any) => {
+const parseSkills = (skills: unknown) => {
   if (!skills) return [];
   if (typeof skills === "string") {
     try {
@@ -80,21 +80,19 @@ const validateProject = (isUpdate = false) => async (
     await schema.validate(req.body, { abortEarly: false });
 
     next(); // tout est OK
-  } catch (err: any) {
-    // Construction d'un objet erreurs lisible pour le front
-    const errors = err.inner?.reduce((acc: any, e: any) => {
-      if (e.path) {
-        // Map des noms pour correspondre au front
-        const key =
-          e.path === "title" ? "title" :
-          e.path === "link" ? "link" :
-          e.path === "description" ? "description" :
-          e.path;
-        acc[key] = e.message;
-      }
-      return acc;
-    }, {});
-    return res.status(400).json({ errors });
+  } catch (err: unknown) {
+    if (err instanceof yup.ValidationError) {
+      const errors = err.inner?.reduce((acc: Record<string, string>, e: yup.ValidationError) => {
+        if (e.path) {
+          // Map des noms pour correspondre au front
+          const key = e.path === "title" ? "title" : e.path === "link" ? "link" : e.path === "description" ? "description" : e.path;
+          acc[key] = e.message;
+        }
+        return acc;
+      }, {} as Record<string, string>);
+      return res.status(400).json({ errors });
+    }
+    return res.status(400).json({ errors: {} });
   }
 };
 

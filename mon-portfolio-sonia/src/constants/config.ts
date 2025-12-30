@@ -2,6 +2,7 @@ type TSection = {
   p: string;
   h2: string;
   content?: string;
+  inProgressLabel?: string;
 };
 
 type TConfig = {
@@ -73,10 +74,12 @@ export const config: TConfig = {
       Three.js. I'm a quick learner and collaborate closely with clients to
       create efficient, scalable, and user-friendly solutions that solve
       real-world problems. Let's work together to bring your ideas to life!`,
+      inProgressLabel: "En cours",
     },
     experience: {
       p: "What I have done so far",
       h2: "Work Experience.",
+      inProgressLabel: "En cours",
     },
     tech: {
       p: "Technologies I work with",
@@ -94,6 +97,7 @@ export const config: TConfig = {
     links to code repositories and live demos in it. It reflects my
     ability to solve complex problems, work with different technologies,
     and manage projects effectively.`,
+      inProgressLabel: "En cours",
     },
   },
 };
@@ -104,7 +108,11 @@ export const navLinks = [
     title: "About",
   },
   {
-    id: "work",
+    id: "experience",
+    title: "Experience",
+  },
+  {
+    id: "works",
     title: "Work",
   },
   {

@@ -1,15 +1,30 @@
 import React, { useId } from "react";
 import FormRow, { FormRowProps } from "./FormRow";
 import { Button } from "../../atoms";
+import FileInput from "../../atoms/FileInput";
 
 interface FormCardProps {
   title: string;
   fields: FormRowProps[];
+  // Support either a single fileField (legacy) or multiple fileFields
   fileField?: {
     name: string;
     label: string;
     preview?: string | null;
+    accept?: string;
+    value?: File | string | null;
+    showRemove?: boolean;
+    showPreview?: boolean;
   };
+  fileFields?: Array<{
+    name: string;
+    label: string;
+    preview?: string | null;
+    accept?: string;
+    value?: File | string | null;
+    showRemove?: boolean;
+    showPreview?: boolean;
+  }>;
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => void;
@@ -18,62 +33,69 @@ interface FormCardProps {
   hideSubmit?: boolean;
 }
 
-const FormCard: React.FC<FormCardProps> = ({
-  title,
-  fields,
-  fileField,
-  onChange,
-  onSubmit,
-  submitLabel = "Envoyer",
-  hideSubmit = false,
-}) => {
-  const formId = useId();
+const FormCard = React.forwardRef<HTMLDivElement, FormCardProps>(
+  (
+    {
+      title,
+      fields,
+      fileField,
+      fileFields,
+      onChange,
+      onSubmit,
+      submitLabel = "Envoyer",
+      hideSubmit = false,
+    },
+    ref
+  ) => {
+    const formId = useId();
 
-  return (
-    <div className="p-6 border rounded-lg bg-[rgba(0,0,0,0.35)] flex flex-col gap-4 shadow-md">
-      <h2 className="text-white text-xl font-semibold">{title}</h2>
+    return (
+      <div ref={ref} className="p-6 border rounded-lg bg-[rgba(0,0,0,0.35)] flex flex-col gap-4 shadow-md">
+        <h2 className="text-white text-xl font-semibold">{title}</h2>
 
-      {fields.map((field) => (
-        <FormRow
-          key={`${formId}-${field.name}`}
-          {...field}
-          onChange={onChange}
-        />
-      ))}
+        {fields.map((field) => (
+          <FormRow key={`${formId}-${field.name}`} {...field} onChange={onChange} />
+        ))}
 
-      {fileField && (
-        <div className="flex flex-col">
-          <label htmlFor={`${formId}-file-${fileField.name}`} className="mb-2 font-medium text-white">
-            {fileField.label}
-          </label>
-          <input
-            id={`${formId}-file-${fileField.name}`}
-            type="file"
-            name={fileField.name}
-            onChange={onChange}
-            title={`Upload ${fileField.label}`}
-            aria-label={`Upload ${fileField.label}`}
-            className="bg-[rgba(0,0,0,0.5)] border border-[rgba(145,94,255,0.25)] rounded-lg px-4 py-2 text-white outline-none focus:border-[#915EFF] focus:ring-1 focus:ring-[#915EFF] transition"
-          />
-          {fileField.preview && (
-            <img
-              src={fileField.preview}
-              alt={`Preview of ${fileField.label}`}
-              className="w-40 h-40 object-cover rounded mt-2 border border-gray-400"
+        {fileFields && fileFields.length > 0 ? (
+          fileFields.map((f) => (
+            <FileInput
+              key={f.name}
+              name={f.name}
+              label={f.label}
+              preview={f.preview ?? null}
+              value={f.value}
+              accept={f.accept}
+              onChange={onChange}
+              showRemove={f.showRemove}
+              showPreview={typeof f.showPreview === "boolean" ? f.showPreview : true}
             />
-          )}
-        </div>
-      )}
+          ))
+        ) : fileField ? (
+          <FileInput
+            name={fileField.name}
+            label={fileField.label}
+            preview={fileField.preview ?? null}
+            value={fileField.value}
+            accept={fileField.accept}
+            onChange={onChange}
+            showRemove={fileField.showRemove}
+            showPreview={typeof fileField.showPreview === "boolean" ? fileField.showPreview : true}
+          />
+        ) : null}
 
-      {!hideSubmit && (
-        <Button
-          onClick={onSubmit}
-          label={submitLabel}
-          className="mt-4 self-start bg-[#915EFF] hover:bg-[#7a4ed9] text-white font-semibold"
-        />
-      )}
-    </div>
-  );
-};
+        {!hideSubmit && (
+          <Button
+            onClick={onSubmit}
+            label={submitLabel}
+            className="mt-4 self-start bg-[#915EFF] hover:bg-[#7a4ed9] text-white font-semibold"
+          />
+        )}
+      </div>
+    );
+  }
+);
+
+FormCard.displayName = "FormCard";
 
 export default FormCard;

@@ -1,30 +1,36 @@
+// Keep typing-safe: avoid `any` casts below by narrowing types
 import { Canvas } from "@react-three/fiber";
 import { useGLTF, useAnimations, Center, OrbitControls } from "@react-three/drei";
 import { Suspense, useEffect, useRef } from "react";
 import { Loader as CanvasLoader } from "../atoms";
+import { Group, Object3D, Material } from "three";
 
 
 const Robot = () => {
-  const group = useRef<any>();
+  const group = useRef<Group | null>(null);
   const { scene, animations } = useGLTF("/robot/robot_playground.glb");
   const { actions } = useAnimations(animations, group);
 
   // Stylisation futuriste du robot
   useEffect(() => {
-    scene.traverse((child: any) => {
-      if (child.isMesh && child.material) {
-        child.material.transparent = true;
-        child.material.opacity = 0.95;
-        child.material.emissive?.set("#915EFF");
-        child.material.emissiveIntensity = 0.6;
+    scene.traverse((child: Object3D) => {
+      // Some children are Mesh with material — guard via duck-typing
+      const maybeMesh = child as unknown as { isMesh?: boolean; material?: Material | { emissive?: { set?: (v: string) => void }; [key: string]: unknown } };
+      if (maybeMesh.isMesh && maybeMesh.material) {
+        const mat = maybeMesh.material as { transparent?: boolean; opacity?: number; emissive?: { set?: (v: string) => void }; emissiveIntensity?: number };
+        mat.transparent = true;
+        mat.opacity = 0.95;
+        mat.emissive?.set?.("#915EFF");
+        mat.emissiveIntensity = 0.6;
       }
     });
   }, [scene]);
 
-  // Play animations
+  // Lancer les animations
   useEffect(() => {
     if (!actions) return;
-    Object.values(actions).forEach((action: any) => {
+    Object.values(actions).forEach((action) => {
+      if (!action) return;
       action.reset().fadeIn(0.5).play();
     });
   }, [actions]);
@@ -50,7 +56,7 @@ const RobotPlayground = () => {
       // caméra rapprochée (valeur restaurée)
       camera={{ position: [0, 1.4, 4.5], fov: 35 }}
       className="absolute inset-0 z-20 pointer-events-auto opacity-95"
-      // stop propagation so any global contextmenu preventDefault doesn't block the native menu
+      // stopper la propagation pour que tout preventDefault global du contextmenu ne bloque pas le menu natif
       onContextMenu={(e) => { e.stopPropagation(); /* don't call preventDefault -> allow native menu */ }}
       gl={{ antialias: true, powerPreference: "high-performance", alpha: true }}
     >

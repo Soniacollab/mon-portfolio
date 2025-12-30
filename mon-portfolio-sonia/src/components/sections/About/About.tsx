@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { SectionWrapper } from "../../../hoc";
 import { Typography } from "../../atoms";
 import { useProfile } from "../../../hooks/useProfile";
+import { API_BASE } from "../../../constants/api";
 
 const About = () => {
   const { profile, loading, error, cvDownloadUrl, downloadCV } = useProfile();
@@ -13,7 +14,7 @@ const About = () => {
   const avatarUrl = profile.avatar
     ? profile.avatar.startsWith("http")
       ? profile.avatar
-      : `http://localhost:5000${profile.avatar}`
+        : `${API_BASE}${profile.avatar}`
     : null;
 
   const handleDownloadCV = async (e: React.MouseEvent<HTMLAnchorElement>) => {

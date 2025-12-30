@@ -1,6 +1,7 @@
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { Request, Response, NextFunction } from "express";
 
 // -------- Taille max fichier (5 Mo par défaut)
 const MAX_SIZE = 5 * 1024 * 1024;
@@ -54,6 +55,7 @@ export const uploadFile = multer({
       "image/png",
       "image/gif",
       "image/webp",
+      "image/svg+xml",
     ];
 
     if (allowedImages.includes(file.mimetype)) {
@@ -71,10 +73,10 @@ export const uploadFile = multer({
 
 // -------- Gestion des erreurs Multer
 export const handleUploadErrors = (
-  err: any,
-  req: any,
-  res: any,
-  next: any
+  err: unknown,
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
@@ -87,7 +89,8 @@ export const handleUploadErrors = (
   }
 
   if (err) {
-    return res.status(400).json({ message: err.message });
+    const msg = (err as { message?: string })?.message || String(err);
+    return res.status(400).json({ message: msg });
   }
 
   next();

@@ -15,7 +15,7 @@ const HeroText = () => {
           max-w-[22ch]
         "
       >
-        Hi, I'm <span className="text-[#915EFF]">{config.hero.name}</span>
+        Hi, I&apos;m <span className="text-[#915EFF]">{config.hero.name}</span>
       </Typography>
 
       <Typography

@@ -6,9 +6,9 @@ import { motion } from "framer-motion";
 import { Typography } from "../../atoms";
 import { config } from "../../../constants/config";
 import { useSkills } from "../../../hooks/useSkills";
+import { API_BASE } from "../../../constants/api";
 
-const SERVER_URL = "http://localhost:5000";
-const DEFAULT_ICON = `${SERVER_URL}/uploads/skills/icon-1766599236793.png`; // fallback si pas d'icône
+const DEFAULT_ICON = `${API_BASE}/uploads/skills/icon-1766599236793.png`; // fallback si pas d'icône
 
 const Tech = () => {
   const { skills, error } = useSkills();
@@ -61,7 +61,7 @@ const Tech = () => {
         {mainSkills.map((skill) => (
           <TechCard
             key={skill.name}
-            icon={skill.icon ? `${SERVER_URL}${skill.icon}` : DEFAULT_ICON}
+            icon={skill.icon ? `${API_BASE}${skill.icon}` : DEFAULT_ICON}
             name={skill.name}
           />
         ))}
@@ -73,7 +73,7 @@ const Tech = () => {
           {otherSkills.map((skill) => (
             <TechCard
               key={skill.name}
-              icon={skill.icon ? `${SERVER_URL}${skill.icon}` : DEFAULT_ICON} // fallback ici aussi
+              icon={skill.icon ? `${API_BASE}${skill.icon}` : DEFAULT_ICON} // fallback ici aussi
               name={skill.name}
               isMain={false}
             />

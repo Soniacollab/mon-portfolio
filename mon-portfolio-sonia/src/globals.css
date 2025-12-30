@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap");
 
 
-/* Remove or comment out: */
+/* Supprimer ou commenter : */
 /* @import "./styles/hero.css"; */
 
 @tailwind base;
@@ -37,16 +37,14 @@
 
 .violet-gradient {
   background: #804dee;
+  background: -webkit-linear-gradient(-90deg, #804dee 0%, rgba(60, 51, 80, 0) 100%);
   background: linear-gradient(-90deg, #804dee 0%, rgba(60, 51, 80, 0) 100%);
-  background: -webkit-linear-gradient(-90deg,
-      #804dee 0%,
-      rgba(60, 51, 80, 0) 100%);
 }
 
 .green-pink-gradient {
-  background: "#00cea8";
-  background: linear-gradient(90.13deg, #00cea8 1.9%, #bf61ff 97.5%);
+  background: #00cea8;
   background: -webkit-linear-gradient(-90.13deg, #00cea8 1.9%, #bf61ff 97.5%);
+  background: linear-gradient(90.13deg, #00cea8 1.9%, #bf61ff 97.5%);
 }
 
 .orange-text-gradient {
@@ -64,7 +62,7 @@
   -webkit-text-fill-color: transparent;
 }
 
-/* Ajoutez ceci quelque part dans votre fichier CSS principal (index.css) */
+
 /* CLASSE DE DÉGRADÉ DE TEXTE VIOLET À BLEU */
 .violet-blue-text-gradient {
   background: linear-gradient(90deg, #915EFF 40%, #00c8ff 100%);
@@ -74,9 +72,8 @@
   color: transparent;
 }
 
-/* ... Laissez les autres classes intactes ... */
 
-/* canvas- styles */
+/* styles canvas */
 .canvas-loader {
   font-size: 10px;
   width: 1em;
@@ -191,7 +188,7 @@
   box-shadow: 0 8px 30px rgba(8,7,16,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
 }
 
-/* Future-screen card hover */
+/* Effet au survol des cartes "future-screen" */
 .future-card {
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
@@ -201,7 +198,7 @@
   border-color: rgba(145,94,255,0.22);
 }
 
-/* Future card base */
+/* Base des cartes "future" */
 .future-card {
   background: linear-gradient(180deg, rgba(18,16,28,0.68), rgba(22,18,40,0.64));
   border: 1px solid rgba(145,94,255,0.08);
@@ -212,7 +209,7 @@
   overflow: hidden;
 }
 
-/* animated top accent bar */
+/* barre d'accentuation animée en haut */
 .future-card::after {
   content: "";
   position: absolute;
@@ -227,14 +224,15 @@
   pointer-events: none;
 }
 
-/* subtle animated outer border */
+/* bordure externe animée subtile */
 .future-card::before {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: 14px;
-  padding: 1px; /* ensures inner content stays padded */
+  padding: 1px; 
   -webkit-mask: linear-gradient(#fff,#fff) content-box, linear-gradient(#fff,#fff);
+  mask: linear-gradient(#fff,#fff) content-box, linear-gradient(#fff,#fff);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
   pointer-events: none;
@@ -248,7 +246,7 @@
   box-shadow: 0 18px 40px rgba(145,94,255,0.04) inset;
 }
 
-/* Experience header highlight (subtle radial glow) */
+/* Mise en valeur de l'en-tête Experience  */
 .experience-header {
   position: relative;
 }
@@ -322,7 +320,7 @@
 }
 .btn-secondary:hover { background: rgba(255,255,255,0.02); transform: translateY(-2px); }
 
-/* small meta chips inside About card */
+
 .meta-chip {
   display: inline-flex;
   align-items: center;
@@ -337,7 +335,7 @@
 
 .meta-chip svg { width: 14px; height: 14px; opacity: 0.9 }
 
-/* Hero animated CSS background (subtle moving gradient + radial glow) */
+/* Fond CSS animé du Hero */
 @keyframes heroGradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
@@ -391,7 +389,7 @@
   animation: blobMove2 18s ease-in-out infinite;
 }
 
-/* subtle grain/noise overlay to add texture */
+/* superposition subtile de grain/bruit pour ajouter de la texture */
 .hero-noise {
   position: absolute;
   inset: 0;
@@ -404,7 +402,7 @@
   filter: contrast(0.9) saturate(0.95);
 }
 
-/* Scroll indicator styling */
+/* Style de l'indicateur de défilement */
 .hero-scroll {
   display: inline-flex;
   align-items: center;
@@ -431,13 +429,13 @@
   100% { transform: translateY(0); opacity: 1; }
 }
 
-/* moving thin stripes */
+/* lignes fines mobiles */
 @keyframes heroLinesMove {
   from { background-position: 0 0, 0 0; }
   to { background-position: 100% 0, 200% 200%; }
 }
 
-/* floating blobs */
+/* bulles flottantes */
 @keyframes blobMove1 {
   0% { transform: translate(0,0) scale(1); }
   33% { transform: translate(6vw,-4vh) scale(1.05); }

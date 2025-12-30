@@ -4,9 +4,10 @@ import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { Decal, Float, OrbitControls, Preload } from "@react-three/drei";
 import { Loader as CanvasLoader } from "../atoms";
+import { API_BASE } from "../../constants/api";
 
 // fallback sûr — ton fichier dans backend/uploads
-const FALLBACK_IMG = "http://localhost:5000/uploads/skills/icon-1766599236793.png";
+const FALLBACK_IMG = `${API_BASE}/uploads/skills/icon-1766599236793.png`;
 
 type BallProps = { imgUrl?: string | null };
 

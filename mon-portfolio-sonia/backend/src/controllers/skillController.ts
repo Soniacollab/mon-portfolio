@@ -54,8 +54,20 @@ export const createSkill = async (req: Request, res: Response) => {
 
     res.status(201).json(skillsData.length === 1 ? createdSkills[0] : createdSkills);
   } catch (err) {
-    console.error("createSkill error:", err);
-    res.status(500).json({ message: "Erreur création compétence" });
+    console.error("createSkill error:", err, { body: req.body, file: req.file });
+    // Validation / cast errors from mongoose
+    const e = err as { name?: string; code?: number } | undefined;
+    if (e?.name === "ValidationError") {
+      return res.status(400).json({ message: "Données invalides", details: err });
+    }
+    if (e?.name === "CastError") {
+      return res.status(400).json({ message: "ID invalide ou format de champ incorrect", details: err });
+    }
+    // Handle duplicate key (unique name) gracefully
+    if (e?.code === 11000) {
+      return res.status(400).json({ message: "Une compétence avec ce nom existe déjà", details: err });
+    }
+    res.status(500).json({ message: "Erreur création compétence", details: err });
   }
 };
 
@@ -82,8 +94,18 @@ export const updateSkill = async (req: Request, res: Response) => {
     await skill.save();
     res.json(skill);
   } catch (err) {
-    console.error("updateSkill error:", err);
-    res.status(500).json({ message: "Erreur mise à jour compétence" });
+    console.error("updateSkill error:", err, { body: req.body, file: req.file });
+    const ue = err as { name?: string; code?: number } | undefined;
+    if (ue?.name === "ValidationError") {
+      return res.status(400).json({ message: "Données invalides", details: err });
+    }
+    if (ue?.name === "CastError") {
+      return res.status(400).json({ message: "ID invalide ou format de champ incorrect", details: err });
+    }
+    if (ue?.code === 11000) {
+      return res.status(400).json({ message: "Une compétence avec ce nom existe déjà", details: err });
+    }
+    res.status(500).json({ message: "Erreur mise à jour compétence", details: err });
   }
 };
 

@@ -1,3 +1,5 @@
+//------------- Hook pour gérer le téléchargement de fichiers ----------//
+
 import { useCallback, useState } from "react";
 import downloadFile from "../utils/download";
 
@@ -5,6 +7,8 @@ export default function useFileDownload() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Fonction pour télécharger un fichier
+  // j'utilise useCallback pour éviter de recréer la fonction à chaque rendu
   const download = useCallback(async (url?: string, filename?: string) => {
     if (!url) {
       setError("URL manquante");
@@ -14,8 +18,9 @@ export default function useFileDownload() {
     setError(null);
     try {
       await downloadFile(url, filename);
-    } catch (err: any) {
-      setError(err?.message || "Erreur lors du téléchargement");
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError(String(err) || "Erreur lors du téléchargement");
     } finally {
       setLoading(false);
     }

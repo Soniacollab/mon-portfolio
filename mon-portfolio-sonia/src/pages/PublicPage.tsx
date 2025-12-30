@@ -9,14 +9,30 @@ import {
   StarsCanvas,
 } from "../components";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { config } from "../constants/config";
 
 const PublicPage = () => {
+  const location = useLocation();
+
   useEffect(() => {
     if (document.title !== config.html.title) {
       document.title = config.html.title;
     }
   }, []);
+
+  
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const el = document.getElementById(id);
+      if (el) {
+        const offset = 80; 
+        const top = el.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top, behavior: 'smooth' });
+      }
+    }
+  }, [location]);
 
   return (
     <div className="bg-primary relative z-0">

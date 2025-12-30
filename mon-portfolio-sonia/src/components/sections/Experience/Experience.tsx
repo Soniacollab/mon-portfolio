@@ -5,7 +5,8 @@ import { SectionHeader } from "../../molecules/";
 import { Divider, Typography } from "../../atoms";
 import { config } from "../../../constants/config";
 import { useExperiences } from "../../../hooks/useExperiences";
-import thp from "../../../../public/assets/thp.png";
+import { API_BASE } from "../../../constants/api";
+const thp = "/assets/thp.png";
 
 const Experience = () => {
   const { experiences, loading, error } = useExperiences();
@@ -71,7 +72,7 @@ const Experience = () => {
               ...(exp.achievements || []),
               `Technologies : ${exp.technologies?.map((t) => t.name).filter(Boolean).join(", ")}`,
             ].filter((p) => typeof p === "string" && p.trim() !== "")}
-            iconUrl={exp.icon ? `http://localhost:5000${exp.icon}` : thp}
+            iconUrl={exp.icon ? (exp.icon.startsWith("http") ? exp.icon : `${API_BASE}${exp.icon}`) : thp}
             iconBg="#3b3f66"
           />
         ))}
@@ -80,4 +81,4 @@ const Experience = () => {
   );
 };
 
-export default SectionWrapper(Experience, "work");
+export default SectionWrapper(Experience, "experience");

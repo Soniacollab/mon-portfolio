@@ -15,7 +15,8 @@ export const getProfile = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Aucun profil trouvé" });
 
     // On retire le mot de passe avant d'envoyer la réponse
-    const { password, ...rest } = profile as any;
+    const rest = { ...(profile as unknown as Record<string, unknown>) };
+    delete (rest as unknown as Record<string, unknown>)['password'];
     res.json(rest);
   } catch (err) {
     console.error("getProfile error:", err);
@@ -61,7 +62,8 @@ export const updateProfile = async (req: Request, res: Response) => {
       });
 
       await profile.save();
-      const { password: _p, ...rest } = profile.toObject();
+      const rest = profile.toObject() as unknown as Record<string, unknown>;
+      delete (rest as unknown as Record<string, unknown>)['password'];
       return res.status(201).json(rest);
     }
 
@@ -84,7 +86,8 @@ export const updateProfile = async (req: Request, res: Response) => {
 
     await profile.save();
 
-    const { password: _p, ...rest } = profile.toObject();
+    const rest = profile.toObject() as unknown as Record<string, unknown>;
+    delete (rest as unknown as Record<string, unknown>)['password'];
     res.json(rest);
   } catch (err) {
     console.error("updateProfile error:", err);
@@ -95,8 +98,7 @@ export const updateProfile = async (req: Request, res: Response) => {
 
 /* ======================================================
    GET /api/profile/cv/:filename
-   Télécharge le fichier CV en forçant Content-Disposition
-   accessible publiquement
+   Télécharge le fichier CV 
    ====================================================== */
 export const downloadCV = async (req: Request, res: Response) => {
   try {

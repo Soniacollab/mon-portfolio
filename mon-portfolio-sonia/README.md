@@ -1,4 +1,4 @@
-# Portfolio Project — Sonia Ndione
+# Portfolio Project — Sokhna Ndione
 
 This repository contains a full-stack portfolio application (frontend + backend) built with React (Vite/TypeScript) and Node/Express + MongoDB.
 

@@ -7,7 +7,7 @@ import {
   deleteSkill,
 } from "../controllers/skillController";
 import { adminAuth } from "../middleware/authMiddleware";
-import { uploadFile } from "../middleware/upload";
+import { uploadFile, handleUploadErrors } from "../middleware/upload";
 import {
   validateCreateSkill,
   validateUpdateSkill,
@@ -28,6 +28,7 @@ router.post(
   "/admin/",
   adminAuth,
   uploadFile.single("icon"),
+  handleUploadErrors,
   validateCreateSkill,
   createSkill
 );
@@ -38,6 +39,7 @@ router.put(
   adminAuth,
   validateObjectId("id"),
   uploadFile.single("icon"),
+  handleUploadErrors,
   validateUpdateSkill,
   updateSkill
 );

@@ -15,13 +15,20 @@ export type TProjectForm =
 
 
 // Form pour le hook
-export type TProfileForm = Omit<TProfile, "_id"> & {
-  avatarFile?: File;
-  cvFile?: File;
+export type TProfileForm = Omit<TProfile, "_id" | "avatar" | "cv_url"> & {
+  avatar?: File | string | null;
+  cv?: File | string | null;
 };
 
 
-  export type TExperienceForm =
-  Omit<TExperience, "_id" | "createdAt" | "updatedAt" | "technologies"> & {
+export type TExperienceForm =
+  Omit<
+    TExperience,
+    "_id" | "createdAt" | "updatedAt" | "technologies" | "achievements"
+  > & {
+    // In forms we prefer a comma-separated string for achievements
+    achievements: string;
     technologies: string[];
+    // preview/upload field used in admin forms
+    experienceIcon?: File | string | null;
   };

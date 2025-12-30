@@ -1,17 +1,22 @@
+import { useState } from "react";
 import { SectionWrapper } from "../../../hoc";
 import { config } from "../../../constants/config";
 import { Typography, Divider } from "../../atoms";
 import { motion } from "framer-motion";
-import { ProjectCard } from "../../molecules";
+import { ProjectCard, MultiSelectSkills } from "../../molecules";
 import { fadeIn } from "../../../utils/motion";
 import { useProjects } from "../../../hooks/useProjects";
+import { useSkills } from "../../../hooks/useSkills";
+import { asset } from "../../../utils/asset";
+import { API_BASE } from "../../../constants/api";
 import { TProject, TSkill } from "../../../types";
 import { skillColors } from "../../../constants/skill";
 
-const API_BASE = "http://localhost:5000";
 
 const Works = () => {
   const { projects, loading, error } = useProjects();
+  const { skills: allSkills } = useSkills();
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
 
   if (loading) return <p className="text-white text-center">Chargement des projets...</p>;
   if (error) return <p className="text-red-500 text-center">{error}</p>;
@@ -22,9 +27,17 @@ const Works = () => {
     image: p.image
       ? p.image.startsWith("http")
         ? p.image
-        : `${API_BASE}${p.image}`
-      : "/placeholder.jpg",
+        : asset(`${API_BASE}${p.image}`)
+      : asset("/placeholder.jpg"),
   }));
+
+  // Filtre selon les skills sélectionnées (si aucune sélection -> tout afficher).
+  const filteredProjects = projectsWithFullImage.filter((p) => {
+    if (selectedSkills.length === 0) return true;
+    const projSkillIds = (p.skills || []).map((s) => (typeof s === "string" ? s : s._id));
+    // Require that project contains ALL selected skills (AND)
+    return selectedSkills.every((id) => projSkillIds.includes(id));
+  });
 
   return (
     <section>
@@ -57,8 +70,21 @@ const Works = () => {
         </Typography>
       </motion.div>
 
-      <div className="flex flex-wrap justify-center gap-8">
-        {projectsWithFullImage.map((project, index) => {
+      {/* Skills filter */}
+      <div className="mb-6 flex items-center justify-center gap-4 flex-wrap">
+        <MultiSelectSkills skills={allSkills} selected={selectedSkills} onChange={setSelectedSkills} />
+        {selectedSkills.length > 0 && (
+          <button
+            className="text-sm text-white/80 underline ml-2"
+            onClick={() => setSelectedSkills([])}
+          >
+            Effacer les filtres
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 items-start justify-center">
+        {filteredProjects.map((project, index) => {
           // Gestion sécurisée des skills
           const tags = (project.skills || []).map((skill) => {
             const skillObj: TSkill = typeof skill === "string" ? { _id: skill, name: skill, technique: false } : skill;
@@ -77,12 +103,14 @@ const Works = () => {
               image={project.image ?? "/placeholder.jpg"}
               sourceCodeLink={project.link ?? "#"}
               tags={tags}
+              detailLink={`/projects/${project._id}`}
             />
           );
         })}
       </div>
+      
     </section>
   );
 };
 
-export default SectionWrapper(Works, "projects");
+export default SectionWrapper(Works, "works");

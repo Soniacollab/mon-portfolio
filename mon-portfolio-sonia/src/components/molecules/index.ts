@@ -7,4 +7,5 @@ export { default as HeroContent } from "./HeroContent/HeroContent";
 export { default as NavLinksDesktop } from "./NavLink/NavLinksDesktop";
 export { default as NavLinksMobile } from "./NavLink/NavLinksMobile";
 export { default as TechCard } from "./TechCard/TechCard";
-export { default as FormCard } from "./ContactForm/FormCard"
+export { default as FormCard } from "./ContactForm/FormCard";
+export { default as MultiSelectSkills } from "./MultiSelectSkills";

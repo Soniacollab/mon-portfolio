@@ -1,14 +1,18 @@
+// ------------------ Hook pour gérer les formulaires avec création, édition et suppression ------------------ //
+
 import { useReducer, useRef } from "react";
-import { authAPI } from "../api/admin";
+import axios from "axios";
+import { refreshToken } from "../utils/auth";
 
 // ------------------ Types ------------------ //
 type FormAction<T> =
-  | { type: "SET_FIELD"; field: string; value: any }
+  | { type: "SET_FIELD"; field: string; value: unknown }
   | { type: "SET_FORM"; form: T }
   | { type: "SET_ERRORS"; errors: Record<string, string> }
   | { type: "RESET"; defaultForm: T }
   | { type: "SET_EDITING_ID"; id: string | null };
 
+// ------------------ Etats ------------------ //
 interface FormState<T> {
   form: T;
   editingId: string | null;
@@ -52,19 +56,19 @@ function formReducer<T>(state: FormState<T>, action: FormAction<T>): FormState<T
   }
 }
 
-// ------------------ Hook ------------------ //
-export function useFormManager<T extends Record<string, any>>({
+// ------------------ Fonction ------------------ //
+export function useFormManager<T extends Record<string, unknown>>({
   defaultForm,
   api,
   fetchList,
 }: {
   defaultForm: T;
   api: {
-    create: (data: FormData) => Promise<any>;
-    update: (id: string, data: FormData) => Promise<any>;
-    delete: (id: string) => Promise<any>;
+    create: (data: FormData) => Promise<unknown>;
+    update: (id: string, data: FormData) => Promise<unknown>;
+    delete: (id: string) => Promise<unknown>;
   };
-  fetchList: () => Promise<any>;
+  fetchList: () => Promise<unknown>;
 }) {
   const [state, dispatch] = useReducer(formReducer<T>, {
     form: defaultForm,
@@ -99,7 +103,7 @@ const handleChange = (
     return;
   }
 
-  // textarea / text / select / etc.
+  // textarea / text / select / etc
   dispatch({ type: "SET_FIELD", field: target.name, value: target.value });
 };
 
@@ -114,7 +118,7 @@ const handleChange = (
   for (const key in state.form) {
     let val = state.form[key as keyof T] as unknown;
 
-    // Gestion spéciale pour achievements : si c'est une chaîne, transformer en tableau
+    // Gestion spéciale pour achievements : si c'est une chaîne on transforme en tableau
     if (key === "achievements" && typeof val === "string") {
       val = val
         .split(",")
@@ -122,16 +126,23 @@ const handleChange = (
         .filter(Boolean);
     }
 
+    // Si valeur est un File, on l'ajoute directement
     if (val instanceof File) {
       data.append(key, val);
-    } else if (Array.isArray(val)) {
+    } 
+    // Si valeur est un tableau, on ajoute chaque élément individuellement
+    else if (Array.isArray(val)) {
       // Envoyer un tableau en JSON string pour le backend
       data.append(key, JSON.stringify(val));
-    } else {
+    } 
+    // Enfin ajout normal
+    else {
       data.append(key, String(val));
     }
   }
 
+
+  // Appel API create ou update
   try {
     if (state.editingId) await api.update(state.editingId, data);
     else await api.create(data);
@@ -139,25 +150,32 @@ const handleChange = (
     dispatch({ type: "RESET", defaultForm });
     await fetchList();
     return null; // pas d'erreur
-  } catch (err: any) {
-    if (err.response?.status === 401 || err.response?.status === 403) {
-      try {
-        await authAPI.refreshToken();
-        if (state.editingId) await api.update(state.editingId, data);
-        else await api.create(data);
-        dispatch({ type: "RESET", defaultForm });
-        await fetchList();
-        return null;
-      } catch {
-        window.location.href = "/admin/secure-login";
-        return null;
+  } 
+  catch (err: unknown) {
+    if (axios.isAxiosError(err)) {
+      const status = err.response?.status;
+      if (status === 401 || status === 403) {
+        try {
+          const ok = await refreshToken();
+          if (!ok) return null;
+          if (state.editingId) await api.update(state.editingId, data);
+          else await api.create(data);
+          dispatch({ type: "RESET", defaultForm });
+          await fetchList();
+          return null;
+        } catch {
+          return null;
+        }
       }
+
+      const apiErrors = (err.response?.data as { errors?: Record<string, string> } | undefined)?.errors || {};
+      dispatch({ type: "SET_ERRORS", errors: apiErrors });
+      console.error(err);
+      return apiErrors;
     }
 
-    const apiErrors = err?.response?.data?.errors || {};
-    dispatch({ type: "SET_ERRORS", errors: apiErrors });
     console.error(err);
-    return apiErrors;
+    return null;
   }
 };
 
@@ -167,16 +185,20 @@ const handleChange = (
     try {
       await api.delete(id);
       await fetchList();
-    } catch (err: any) {
-      if (err.response?.status === 401 || err.response?.status === 403) {
-        try {
-          await authAPI.refreshToken();
-          await api.delete(id);
-          await fetchList();
-          return;
-        } catch {
-          window.location.href = "/admin/secure-login";
-          return;
+    } catch (err: unknown) {
+      // Narrow Axios errors to access response safely
+      if (axios.isAxiosError(err)) {
+        const status = err.response?.status;
+        if (status === 401 || status === 403) {
+          try {
+            const ok = await refreshToken();
+            if (!ok) return; // caller handles UX
+            await api.delete(id);
+            await fetchList();
+            return;
+          } catch {
+            return;
+          }
         }
       }
       console.error(err);

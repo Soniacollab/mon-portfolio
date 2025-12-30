@@ -3,45 +3,11 @@ import { Request, Response } from "express";
 import Experience from "../models/Experience";
 import Skill from "../models/Skill";
 import mongoose from "mongoose";
+// Récupère l'utilitaire partagé pour normaliser les réalisations
+import parseAchievements from "../shared/parseAchievements";
 
-// Robust normalizer for achievements input (JSON array, CSV, newlines, or quoted items)
-const normalizeAchievements = (raw: any): string[] => {
-  if (raw === undefined || raw === null) return [];
-  if (Array.isArray(raw)) {
-    // Some clients may produce an array of JSON-fragments like ['["a"', '"b"]']
-    // Try to rejoin and parse as JSON first
-    try {
-      const joined = raw.join(",");
-      const parsed = JSON.parse(joined);
-      if (Array.isArray(parsed)) return parsed.map((a: any) => String(a).trim()).filter(Boolean);
-    } catch {
-      // fallback: strip surrounding brackets/quotes from each item
-      return raw
-        .map((a: any) => String(a).replace(/^[\[\]"]+|[\[\]"]+$/g, "").trim())
-        .filter(Boolean);
-    }
-  }
-  if (typeof raw === "string") {
-    const s = raw.trim();
-    if (!s) return [];
-    // try JSON parse first
-    try {
-      const parsed = JSON.parse(s);
-      if (Array.isArray(parsed)) return parsed.map((a: any) => String(a).trim()).filter(Boolean);
-    } catch {
-      // ignore
-    }
-
-    // If looks like ["a" "b"] where commas missing but quotes present, extract quoted parts
-    const quotedMatches = Array.from(s.matchAll(/"([^"]+)"|'([^']+)'/g)).map(m => (m[1] || m[2] || "").trim()).filter(Boolean);
-    if (quotedMatches.length) return quotedMatches;
-
-    // Split on common delimiters: comma, semicolon, or newlines
-    return s.split(/[,;\r\n]+/).map(part => part.replace(/[\[\]\"]+/g, "").trim()).filter(Boolean);
-  }
-  // Fallback: coerce to string and split
-  return String(raw).split(/[,;\r\n]+/).map(p => p.replace(/[\[\]\"]+/g, "").trim()).filter(Boolean);
-};
+// NOTE: use the shared `parseAchievements` util from frontend `src/utils`.
+// La fonction exportée par défaut renvoie un tableau de chaînes nettoyées.
 
 
 /************************************************************** 
@@ -51,12 +17,16 @@ const normalizeAchievements = (raw: any): string[] => {
 export const getExperiences = async (req: Request, res: Response) => {
   try {
     const experiences = await Experience.find()
-      .populate("technologies") // Remplace les IDs par les doc des technologies
-      .sort({ startDate: -1 }) // Tri décroissant par date de début
+      .populate("technologies")
+      
+      // Ici on trie par endDate asc , puis startDate desc, puis createdAt desc
+      .sort({ endDate: 1, startDate: -1, createdAt: -1 })
       .lean(); // Retourne un objet simple
-    const cleaned = experiences.map((exp: any) => ({
-      ...exp,
-      achievements: normalizeAchievements(exp.achievements),
+
+    // Nettoyage du champ achievements pour chaque expérience
+    const cleaned = (experiences as unknown[]).map((exp) => ({
+      ...(exp as Record<string, unknown>),
+      achievements: parseAchievements((exp as Record<string, unknown>)["achievements"]),
     }));
 
     res.json(cleaned); // Envoie la réponse JSON au client
@@ -91,7 +61,7 @@ export const createExperience = async (req: Request, res: Response) => {
 
     // Transformation du tableau de technologies en ObjectId valides
     const techIds: mongoose.Types.ObjectId[] = [];
-    let techRaw: any[] = [];
+    let techRaw: unknown[] = [];
     if (Array.isArray(technologies)) techRaw = technologies;
     else if (typeof technologies === "string") {
       try {
@@ -104,13 +74,24 @@ export const createExperience = async (req: Request, res: Response) => {
     }
 
     for (const t of techRaw) {
-      if (mongoose.Types.ObjectId.isValid(t)) {
-        techIds.push(new mongoose.Types.ObjectId(t));
-      } else {
-        const name = String(t).trim();
+
+      // Accepter soit un ID Mongo valide, soit un nom de compétence
+      const tStr = String(t);
+
+      // Si c'est un ID Mongo valide, l'utiliser directement
+      if (mongoose.Types.ObjectId.isValid(tStr)) {
+        techIds.push(new mongoose.Types.ObjectId(tStr));
+      }
+      
+      // Sinn nom de compétence 
+      else {
+        const name = tStr.trim();
         if (!name) continue;
-        // find existing skill by case-insensitive name
-        const existing = await Skill.findOne({ name: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") });
+        
+        // Chercher une compétence existante (insensible à la casse)
+        const existing = await Skill.findOne({ name: new RegExp(`^${name.replace(/[.*+?^${}()|[\\]\\]/g, "\\\\$&")}$`, "i") });
+
+        // Si trouvée on utilise son ID, sinon créer une new compétence
         if (existing) techIds.push(existing._id);
         else {
           const created = new Skill({ name, technique: false, icon: "/assets/default-skill.svg" });
@@ -122,7 +103,7 @@ export const createExperience = async (req: Request, res: Response) => {
 
     // Normaliser le champ achievements quelle que soit la forme envoyée
     console.log("createExperience - raw achievements:", achievements);
-    const achievementsArr: string[] = normalizeAchievements(achievements);
+    const achievementsArr: string[] = parseAchievements(achievements);
     console.log("createExperience - normalized achievements:", achievementsArr);
 
     // Création du document Experience
@@ -188,7 +169,7 @@ export const updateExperience = async (req: Request, res: Response) => {
     // Permettre la mise à jour depuis différentes formes (JSON, CSV, newlines, quoted)
     if (typeof achievements !== "undefined") {
       console.log("updateExperience - raw achievements:", achievements);
-      const norm = normalizeAchievements(achievements);
+      const norm = parseAchievements(achievements);
       console.log("updateExperience - normalized achievements:", norm);
       experience.achievements = norm;
     }
@@ -202,11 +183,12 @@ export const updateExperience = async (req: Request, res: Response) => {
       const newTechIds: mongoose.Types.ObjectId[] = [];
       if (Array.isArray(technologies)) {
         for (const t of technologies) {
-          if (mongoose.Types.ObjectId.isValid(t)) newTechIds.push(new mongoose.Types.ObjectId(t));
+          const tStr = String(t);
+          if (mongoose.Types.ObjectId.isValid(tStr)) newTechIds.push(new mongoose.Types.ObjectId(tStr));
           else {
-            const name = String(t).trim();
+            const name = tStr.trim();
             if (!name) continue;
-            const existing = await Skill.findOne({ name: new RegExp(`^${name.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}$`, "i") });
+            const existing = await Skill.findOne({ name: new RegExp(`^${name.replace(/[.*+?^${}()|[\\]\\]/g, "\\\\$&")}$`, "i") });
             if (existing) newTechIds.push(existing._id);
             else {
               const created = new Skill({ name, technique: false, icon: "/assets/default-skill.svg" });

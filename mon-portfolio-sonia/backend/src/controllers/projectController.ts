@@ -1,6 +1,6 @@
 //------------------------- Project Controller ----------------------//
 
-import e, { Request, Response } from "express";
+import { Request, Response } from "express";
 import mongoose from "mongoose";
 import Project from "../models/Project";
 import ProjectSkill from "../models/ProjectSkill";
@@ -13,11 +13,10 @@ import Skill from "../models/Skill";
  **************************************************************/
 export const getProjects = async (req: Request, res: Response) => {
   try {
-    const projects = await Project.find()
-      .populate("skills")
-      .sort({ createdAt: -1 })
-      .lean();
-
+    const start = Date.now();
+    const projects = await Project.find().populate("skills").sort({ createdAt: -1 }).lean();
+    const duration = Date.now() - start;
+    console.log(`getProjects: fetched ${projects.length} projects in ${duration}ms`);
     res.json(projects);
   } catch (err) {
     console.error("getProjects erreur:", err);

@@ -17,6 +17,10 @@ export interface InputProps {
   multiple?: boolean;
 }
 
+let __uid = 0;
+
+const nextUid = () => ++__uid;
+
 const Input: React.FC<InputProps> = ({
   id,
   name,
@@ -31,12 +35,14 @@ const Input: React.FC<InputProps> = ({
   options,
   multiple = false,
 }) => {
+  const [generated] = React.useState(() => `uid-${nextUid()}`);
+  const resolvedId = id ?? (name ? `${name}-${generated}` : generated);
   if (type === "select" && options) {
     return (
       <select
-        id={id}
+        id={resolvedId}
         name={name}
-        value={value as any}
+        value={value as unknown as string | string[]}
         onChange={onChange}
         title={title}
         multiple={multiple}
@@ -54,7 +60,7 @@ const Input: React.FC<InputProps> = ({
   if (isTextarea) {
     return (
       <textarea
-        id={id}
+        id={resolvedId}
         name={name}
         placeholder={placeholder}
         value={value}
@@ -67,7 +73,7 @@ const Input: React.FC<InputProps> = ({
 
   return (
     <input
-      id={id}
+      id={resolvedId}
       name={name}
       type={type}
       placeholder={placeholder}

@@ -12,9 +12,9 @@ export const sendContact = async (req: Request, res: Response) => {
     const contact = new Contact({ name, email, message });
     await contact.save();
 
-    // Prepare mail payload. We'll set `from` and `replyTo` depending on SMTP availability.
+    // Préparer le payload du mail. On définira `from` et `replyTo` selon la disponibilité SMTP.
     const to = process.env.CONTACT_TO || process.env.ADMIN_EMAIL;
-    const baseMail: any = {
+    const baseMail: nodemailer.SendMailOptions = {
       to,
       // include submitter email in subject so it's visible in inbox list
       subject: `Contact form: ${name} <${email}>`,
@@ -27,18 +27,16 @@ export const sendContact = async (req: Request, res: Response) => {
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
-    // Helper to send with a given transporter and return preview URL when available
+    // Helper : envoie avec un transporter donné et retourne l'URL de preview si disponible
     const trySend = async (transporter: nodemailer.Transporter) => {
-      const info = await transporter.sendMail(baseMail as any);
-      const preview = (nodemailer as any).getTestMessageUrl
-        ? (nodemailer as any).getTestMessageUrl(info)
-        : undefined;
+      const info = await transporter.sendMail(baseMail as nodemailer.SendMailOptions);
+      const preview = (nodemailer as unknown as { getTestMessageUrl?: (info: unknown) => string | undefined }).getTestMessageUrl?.(info);
       return { info, preview };
     };
 
-    // If SMTP config available, try to use it first. When using authenticated SMTP
-    // it's best to set the `from` to the authenticated user and set `replyTo`
-    // to the submitter so recruiters can reply directly to them.
+    // Si la configuration SMTP est disponible, l'utiliser en priorité. Lorsqu'on utilise un SMTP authentifié
+    // il est préférable de définir `from` sur l'utilisateur authentifié et `replyTo` sur le soumetteur
+    // afin que les recruteurs puissent répondre directement.
     if (host && user && pass && to) {
       try {
         const transporter = nodemailer.createTransport({
@@ -48,7 +46,7 @@ export const sendContact = async (req: Request, res: Response) => {
           auth: { user, pass },
         });
 
-        // use authenticated sender as From but include submitter name so recipient sees applicant
+        // utiliser l'expéditeur authentifié comme From mais inclure le nom du soumetteur pour que le destinataire voie l'auteur
         baseMail.from = `${name} via Portfolio <${user}>`;
         baseMail.replyTo = `${name} <${email}>`;
 
@@ -62,7 +60,7 @@ export const sendContact = async (req: Request, res: Response) => {
       console.warn("SMTP not fully configured — will use Ethereal test account for preview.");
     }
 
-    // Create Ethereal test account and send (useful for development/testing)
+    // Créer un compte Ethereal de test et envoyer (utile en développement/tests)
     try {
       const testAccount = await nodemailer.createTestAccount();
       const ethTransporter = nodemailer.createTransport({
@@ -72,7 +70,7 @@ export const sendContact = async (req: Request, res: Response) => {
         auth: { user: testAccount.user, pass: testAccount.pass },
       });
 
-      // For Ethereal, it's fine to set the From to the submitter so preview shows their name
+      // Pour Ethereal, il est acceptable de définir From sur le soumetteur pour que la preview affiche son nom
       baseMail.from = `${name} <${email}>`;
 
       const { preview } = await trySend(ethTransporter);

@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import * as yup from "yup";
+import { ValidationError } from "yup";
 
 // ------------------ Schéma Yup pour skill ------------------ //
 const skillSchema = yup.object().shape({
@@ -8,9 +9,9 @@ const skillSchema = yup.object().shape({
     .trim()
     .required("Le nom de compétence est obligatoire")
 
-    .matches(/^[a-zA-Z0-9\s-]+$/, {
+    .matches(/^[a-zA-Z0-9\s.-]+$/, {
       message:
-        "Le nom ne peut contenir que des lettres, chiffres, espaces et tirets",
+        "Le nom ne peut contenir que des lettres, chiffres, espaces, points et tirets",
       excludeEmptyString: true,
     })
     .strict(true),
@@ -29,17 +30,18 @@ const validateSkill =
         await schema.validate(req.body, { abortEarly: false });
 
         next(); // tout est OK
-      } catch (err: any) {
-        // Construction d'un objet erreurs lisible pour le frontend
-        const errors = err.inner?.reduce((acc: any, e: any) => {
-          if (e.path) {
-            // map pour correspondre exactement aux noms de champs frontend
-            const key = e.path === "name" ? "name" : e.path;
-            acc[key] = e.message;
-          }
-          return acc;
-        }, {});
-        return res.status(400).json({ errors });
+      } catch (err: unknown) {
+        if (err instanceof ValidationError) {
+          const errors = err.inner?.reduce((acc: Record<string, string>, e: ValidationError) => {
+            if (e.path) {
+              const key = e.path === "name" ? "name" : e.path;
+              acc[key] = e.message;
+            }
+            return acc;
+          }, {} as Record<string, string>);
+          return res.status(400).json({ errors });
+        }
+        return res.status(400).json({ errors: {} });
       }
     };
 
